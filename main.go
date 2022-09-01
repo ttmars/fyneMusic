@@ -4,6 +4,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 	"fyneMusic/myWidget"
@@ -21,21 +22,27 @@ func main() {
 }
 
 func RunApp()  {
-	// 窗口大小
+	// 创建app和窗口
 	myApp := app.NewWithID("io.fyne.demo")
-	myApp.SetIcon(theme.FyneLogo())					// 设置logo
-
 	myWindow := myApp.NewWindow("music")
+
+	myApp.SetIcon(theme.FyneLogo())						// 设置APP图标
 	myWindow.Resize(fyne.NewSize(1200,800))		// 设置窗口大小
-	myWindow.CenterOnScreen()		// 窗口居中显示
-	myWindow.SetMainMenu(MakeMyMenu(myApp, myWindow))		// 创建菜单
-	myWindow.SetMaster()		// 设置为主界面
+	myWindow.CenterOnScreen()							// 窗口居中显示
+	myWindow.SetMaster()								// 设置为主窗口
+	myWindow.SetMainMenu(MakeMyMenu(myApp, myWindow))		// 创建窗口菜单
+	myWindow.SetCloseIntercept(func() {myWindow.Hide()})	// 关闭窗口时，隐藏窗口，而不是退出
+	if desk, ok := myApp.(desktop.App); ok {
+		m := fyne.NewMenu("MyApp",
+			fyne.NewMenuItem("Show", func() {
+				myWindow.Show()
+			}))
+		desk.SetSystemTrayMenu(m)
+	}
 
-	// 导航栏
-	split := myWidget.MakeNav(myApp, myWindow)
-
-	myWindow.SetContent(split)
-	myWindow.ShowAndRun()
+	split := myWidget.MakeNav(myApp, myWindow)		// 导航栏
+	myWindow.SetContent(split)						// 设置内容
+	myWindow.ShowAndRun()							// 运行
 }
 
 // MakeMyMenu 菜单组件
