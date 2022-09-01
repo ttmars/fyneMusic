@@ -76,6 +76,10 @@ func randomPlay()  {
 			randomNum := rand.Intn(len(Data))
 			musicCh <- Data[randomNum].Src
 			musicName.Set("随机播放：" + Data[randomNum].Name + "_" + Data[randomNum].Author + ".mp3")
+			if pauseButton != nil {
+				pauseButton.SetIcon(theme.MediaPauseIcon())
+				pauseButton.SetText("暂停")
+			}
 			if speedLabel != nil {
 				speedLabel.SetText("1.0倍速")
 				speedSlider.SetValue(1)
