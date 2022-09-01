@@ -23,10 +23,10 @@ var ch = make(chan bool, MaxCur)
 func MakePortScan(win fyne.Window) fyne.CanvasObject {
 	host := widget.NewEntry()
 	//host.SetPlaceHolder("baidu.com")
-	host.SetText("39.101.203.25")
+	host.SetText("")
 
 	port := widget.NewEntry()
-	port.SetText("2000")
+	port.SetText("1000")
 
 	timeOut := widget.NewEntry()
 	timeOut.SetText("3")
