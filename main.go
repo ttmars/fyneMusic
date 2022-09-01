@@ -10,7 +10,7 @@ import (
 
 func main()  {
 	myApp := app.NewWithID("io.fyne.demo")			// 创建APP
-	myWindow := myApp.NewWindow("music")			// 创建窗口
+	myWindow := myApp.NewWindow("网易云音乐")			// 创建窗口
 
 	myApp.SetIcon(myTheme.ResourceLogoJpg)			    // 设置logo
 	myApp.Settings().SetTheme(&myTheme.MyTheme{})		// 设置APP主题，嵌入字体，解决乱码

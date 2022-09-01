@@ -3,7 +3,6 @@ package myWidget
 import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -18,7 +17,7 @@ type Screen struct {
 
 // Nav 导航栏与CanvasObject的对应关系
 var Nav = map[string]Screen{
-	"music": {"天天网易云", MusicTable},
+	"music": {"网易云音乐", MusicTable},
 	//"portScan": {"端口扫描", MakePortScan},
 	//"nav1": {"nav1", nav1},
 	//"nav2": {"nav2", nav2},
@@ -104,14 +103,15 @@ func makeNav(setTutorial func(tutorial Screen), loadPrevious bool) fyne.CanvasOb
 		tree.Select(currentPref)
 	}
 
-	themes := container.NewGridWithColumns(2,
-		widget.NewButton("Dark", func() {
-			a.Settings().SetTheme(theme.DarkTheme())
-		}),
-		widget.NewButton("Light", func() {
-			a.Settings().SetTheme(theme.LightTheme())
-		}),
-	)
+	// 设置自定义主题后，字体bug
+	//themes := container.NewGridWithColumns(2,
+	//	widget.NewButton("Dark", func() {
+	//		a.Settings().SetTheme(theme.DarkTheme())
+	//	}),
+	//	widget.NewButton("Light", func() {
+	//		a.Settings().SetTheme(theme.LightTheme())
+	//	}),
+	//)
 
-	return container.NewBorder(nil, themes, nil, nil, tree)
+	return container.NewBorder(nil, nil, nil, nil, tree)
 }
