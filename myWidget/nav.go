@@ -19,18 +19,21 @@ type Screen struct {
 // Nav 导航栏与CanvasObject的对应关系
 var Nav = map[string]Screen{
 	"music": {"天天网易云", MusicTable},
-	"portScan": {"端口扫描", MakePortScan},
-	"nav1": {"nav1", nav1},
-	"nav2": {"nav2", nav2},
-	"nav3": {"nav3", nav3},
-	"nav4": {"nav4", nav4},
-	"nav5": {"nav5", nav5},
+	//"portScan": {"端口扫描", MakePortScan},
+	//"nav1": {"nav1", nav1},
+	//"nav2": {"nav2", nav2},
+	//"nav3": {"nav3", nav3},
+	//"nav4": {"nav4", nav4},
+	//"nav5": {"nav5", nav5},
 }
 
 // NavIndex 导航栏子节点对应关系
+//var NavIndex = map[string][]string{
+//	"": {"music","portScan", "nav1", "nav2", "nav3"},		// 没有叶子节点
+//	"nav3": {"nav4", "nav5"},		// 有子节点
+//}
 var NavIndex = map[string][]string{
-	"": {"music","portScan", "nav1", "nav2", "nav3"},		// 没有叶子节点
-	"nav3": {"nav4", "nav5"},		// 有子节点
+	"": {"music"},
 }
 
 func nav1(win fyne.Window) fyne.CanvasObject {

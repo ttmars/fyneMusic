@@ -54,6 +54,7 @@ func MakePortScan(win fyne.Window) fyne.CanvasObject {
 			p,err1 := strconv.Atoi(port.Text)
 			t,err2 := strconv.Atoi(timeOut.Text)
 			if err1 != nil || err2 != nil || host.Text == "" {
+				form.Enable()
 				return
 			}
 			portScan(host.Text, p, t)
