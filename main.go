@@ -13,9 +13,6 @@ import (
 )
 
 func init()  {
-	//设置中文字体
-	//os.Setenv("FYNE_FONT", "FZSTK.TTF")
-	//os.Setenv("FYNE_FONT", "STXINGKA.TTF")
 	os.Setenv("FYNE_FONT", "./static/font/simkai.ttf")
 }
 
