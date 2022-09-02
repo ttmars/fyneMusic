@@ -6,17 +6,21 @@ import (
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyneMusic/myTheme"
 	"fyneMusic/myWidget"
+	"fyneMusic/tool"
 )
 
 func main()  {
-	myApp := app.NewWithID("io.fyne.demo")			// 创建APP
-	myWindow := myApp.NewWindow("网易云音乐")			// 创建窗口
+	myApp := app.NewWithID("io.fyne.demo")							// 创建APP
+	myWindow := myApp.NewWindow("网易云音乐")						// 创建窗口
+	if !tool.IsDir(myApp.Preferences().String("SongSavePath")) {	// APP参数检查
+		myApp.Preferences().SetString("SongSavePath", myWidget.BasePath)
+	}
 
-	myApp.SetIcon(myTheme.ResourceLogoJpg)			    // 设置logo
-	myApp.Settings().SetTheme(&myTheme.MyTheme{})		// 设置APP主题，嵌入字体，解决乱码
-	myWindow.Resize(fyne.NewSize(1200,800))		// 设置窗口大小
-	myWindow.CenterOnScreen()							// 窗口居中显示
-	myWindow.SetMaster()								// 设置为主窗口
+	myApp.SetIcon(myTheme.ResourceLogoJpg)			    	// 设置logo
+	myApp.Settings().SetTheme(&myTheme.MyTheme{})			// 设置APP主题，嵌入字体，解决乱码
+	myWindow.Resize(fyne.NewSize(1200,800))			// 设置窗口大小
+	myWindow.CenterOnScreen()								// 窗口居中显示
+	myWindow.SetMaster()									// 设置为主窗口
 	myWindow.SetCloseIntercept(func() {myWindow.Hide()})	// 设置窗口托盘显示
 	if desk, ok := myApp.(desktop.App); ok {
 		m := fyne.NewMenu("MyApp",
