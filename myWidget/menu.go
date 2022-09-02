@@ -12,13 +12,16 @@ import (
 // MakeMyMenu 菜单组件
 func MakeMyMenu(a fyne.App, w fyne.Window) *fyne.MainMenu {
 	saveMenuItem := fyne.NewMenuItem("下载路径", func() {
-		e := widget.NewEntryWithData(SavePath)
-		tmp,_ := SavePath.Get()
+		p := a.Preferences().StringWithFallback("SongSavePath", BasePath)
+		e := widget.NewEntry()
+		e.SetText(p)
 		dialog.NewForm("修改下载路径", "确认", "取消", []*widget.FormItem{widget.NewFormItem(">", e)}, func(b bool) {
-			if !b || !tool.IsDir(e.Text) {
-				SavePath.Set(tmp)
-			}else {
-				SavePath.Set(strings.TrimRight(e.Text, "\\"))
+			if tool.IsDir(e.Text) {
+				s := strings.TrimRight(e.Text, "\\")
+				a.Preferences().SetString("SongSavePath", s)
+				e.SetText(s)
+			}else{
+				dialog.ShowInformation("设置失败!", "路径不合法！", W)
 			}
 		}, w).Show()
 	})

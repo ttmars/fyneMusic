@@ -12,7 +12,7 @@ var content = container.NewMax()
 // Screen 页面布局
 type Screen struct {
 	Title string
-	View func(w fyne.Window) fyne.CanvasObject
+	View func(a fyne.App, w fyne.Window) fyne.CanvasObject
 }
 
 // Nav 导航栏与CanvasObject的对应关系
@@ -55,7 +55,7 @@ func MakeNav(myApp fyne.App, myWindow fyne.Window) fyne.CanvasObject {
 	//content := container.NewMax()
 
 	setTutorial := func(t Screen) {
-		content.Objects = []fyne.CanvasObject{t.View(myWindow)}
+		content.Objects = []fyne.CanvasObject{t.View(myApp,myWindow)}
 		//content.Refresh()
 	}
 

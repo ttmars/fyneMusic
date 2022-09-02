@@ -21,7 +21,7 @@ import (
 	"time"
 )
 
-
+var BasePath,_ = filepath.Abs(".") // 下载路径
 var musicLength = 30					// 歌曲名称长度
 var pauseButton *widget.Button			// 暂停按钮，控制样式
 var searchSubmit *widget.Button			// 搜索按钮，防止重复点击
@@ -51,13 +51,6 @@ var API = map[string]string{
 	"网易云": "http://www.youthsweet.com/netease/api?keyword=",
 	"咪咕音乐":"http://www.youthsweet.com/migu/api?keyword=",
 	"QQ音乐": "http://www.youthsweet.com/netease/api?keyword=",
-}
-
-// 下载路径
-var BasePath,_ = filepath.Abs(".")
-var SavePath = binding.NewString()
-func init()  {
-	SavePath.Set(BasePath)
 }
 
 var W fyne.Window
@@ -122,10 +115,10 @@ func PlayMusic()  {
 }
 
 // MusicTable 歌曲列表组件
-func MusicTable(parent fyne.Window) fyne.CanvasObject {
+func MusicTable(myApp fyne.App, parent fyne.Window) fyne.CanvasObject {
 	W = parent
 	// 搜索组件
-	search := searchWidget(parent)
+	search := searchWidget(myApp, parent)
 
 	// 音乐标签
 	titleLabel := widget.NewLabelWithStyle("音乐标题", fyne.TextAlignLeading, fyne.TextStyle{Bold:true})
@@ -137,7 +130,7 @@ func MusicTable(parent fyne.Window) fyne.CanvasObject {
 
 	// 音乐列表
 	for _,v := range musicData {
-		t := oneMusic(v.Name, v.Author, v.Src, parent)
+		t := oneMusic(v.Name, v.Author, v.Src, myApp, parent)
 		cs = append(cs, t)
 	}
 	musicList = container.NewVScroll(container.NewVBox(cs...))		// 先按行布局，然后滚动
@@ -184,7 +177,7 @@ func MusicTable(parent fyne.Window) fyne.CanvasObject {
 }
 
 // 搜索组件
-func searchWidget(parent fyne.Window)fyne.CanvasObject  {
+func searchWidget(myApp fyne.App, parent fyne.Window)fyne.CanvasObject  {
 	searchEntry := widget.NewEntry()
 	searchEntry.SetPlaceHolder("纯音乐")
 
@@ -198,7 +191,7 @@ func searchWidget(parent fyne.Window)fyne.CanvasObject  {
 		musicData = musicAPI(API[searchEngine.Text], searchEntry.Text)
 		cs = cs[0:0]
 		for _,v := range musicData {
-			t := oneMusic(v.Name, v.Author, v.Src, parent)
+			t := oneMusic(v.Name, v.Author, v.Src, myApp, parent)
 			cs = append(cs, t)
 		}
 		musicList.Refresh()
@@ -212,7 +205,7 @@ func searchWidget(parent fyne.Window)fyne.CanvasObject  {
 }
 
 // 单行歌曲组件
-func oneMusic(v1, v2, v3 string, parent fyne.Window) fyne.CanvasObject {
+func oneMusic(v1, v2, v3 string, myApp fyne.App, parent fyne.Window) fyne.CanvasObject {
 	r := []rune(v1)
 	if len(r) > musicLength {
 		r = r[:musicLength]
@@ -229,7 +222,7 @@ func oneMusic(v1, v2, v3 string, parent fyne.Window) fyne.CanvasObject {
 		musicCh <- v3
 	})
 	downloadLable := widget.NewButtonWithIcon("", theme.DownloadIcon(), func() {
-		path,_ := SavePath.Get()
+		path := myApp.Preferences().StringWithFallback("SongSavePath", BasePath)
 		path = path + "\\" + v1 + "_" + v2 + ".mp3"
 		err := downloadMusic(v3, path)
 		if err != nil {
