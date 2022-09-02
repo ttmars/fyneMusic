@@ -72,9 +72,6 @@ func MiguAPI(kw string) []Song {
 		}(id)
 	}
 	wg.Wait()
-	for k,v := range result {
-		fmt.Println(k,v)
-	}
 	for _,v := range result {
 		R = append(R, v)
 	}

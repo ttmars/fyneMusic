@@ -19,7 +19,7 @@ import (
 )
 
 
-var musicData = musicAPI.MiguAPI("周杰伦")	// 歌曲信息
+var musicData = musicAPI.NeteaseAPI("纯音乐")	// 歌曲信息
 var BasePath,_ = filepath.Abs(".") // 下载路径
 var musicLength = 30					// 歌曲名称长度
 var pauseButton *widget.Button			// 暂停按钮，控制样式
@@ -165,7 +165,7 @@ func searchWidget(myApp fyne.App, parent fyne.Window)fyne.CanvasObject  {
 	searchEntry := widget.NewEntry()
 	searchEntry.SetPlaceHolder("纯音乐")
 
-	searchEngine := widget.NewSelectEntry([]string{"网易云"})
+	searchEngine := widget.NewSelectEntry([]string{"网易云", "咪咕音乐"})
 	searchEngine.SetText("网易云")
 
 	searchSubmit = widget.NewButtonWithIcon("搜索",theme.SearchIcon(), func() {
@@ -174,8 +174,11 @@ func searchWidget(myApp fyne.App, parent fyne.Window)fyne.CanvasObject  {
 		}
 		searchSubmit.Disable()
 		// 清空原有数据，重新渲染
-		//musicData = musicAPI(API[searchEngine.Text], searchEntry.Text)
-		musicData = musicAPI.MiguAPI(searchEntry.Text)
+		if searchEngine.Text == "网易云" {
+			musicData = musicAPI.NeteaseAPI(searchEntry.Text)
+		}else{
+			musicData = musicAPI.MiguAPI(searchEntry.Text)
+		}
 		cs = cs[0:0]
 		for _,v := range musicData {
 			t := oneMusic(v.Name, v.Singer, v.Audio, myApp, parent)

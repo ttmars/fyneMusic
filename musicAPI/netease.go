@@ -13,12 +13,13 @@ import (
 )
 
 // 本地虚拟机docker部署
-var neteaseServer = "192.168.66.102:3000"
+//var neteaseServer = "192.168.66.102:3000"
 
 // 通过Vercel部署，无需服务器！！！
 // https://github.com/Binaryify/NeteaseCloudMusicApi
 // https://vercel.com/ttmars/netease-cloud-music-api
 //var neteaseServer = "netease-cloud-music-api-orcin-beta.vercel.app"		// 搜索结果比较少，有缺失。部署的分支有问题？还要开VPN访问？
+var neteaseServer = "neteaseapi.youthsweet.com"
 
 var myHttpClient = &http.Client{Timeout: time.Second*5}
 
