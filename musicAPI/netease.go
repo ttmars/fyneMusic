@@ -9,15 +9,18 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"time"
 )
 
 // 本地虚拟机docker部署
-//var neteaseServer = "192.168.66.102:3000"
+var neteaseServer = "192.168.66.102:3000"
 
 // 通过Vercel部署，无需服务器！！！
 // https://github.com/Binaryify/NeteaseCloudMusicApi
 // https://vercel.com/ttmars/netease-cloud-music-api
-var neteaseServer = "netease-cloud-music-api-orcin-beta.vercel.app"		// 搜索结果比较少，有缺失。部署的分支有问题？
+//var neteaseServer = "netease-cloud-music-api-orcin-beta.vercel.app"		// 搜索结果比较少，有缺失。部署的分支有问题？还要开VPN访问？
+
+var myHttpClient = &http.Client{Timeout: time.Second*5}
 
 type Song struct {
 	ID string			// ID
@@ -29,6 +32,7 @@ type Song struct {
 	Audio string		// 音频链接
 	Time string			// 时长
 	Size string			// 大小
+	Flac string			// flac格式链接，仅咪咕音乐
 }
 
 func test() {
@@ -67,7 +71,7 @@ func Netease(kw string, limit int) (map[string]Song, int, error) {
 	}
 	// 搜索
 	u := fmt.Sprintf("http://%s/cloudsearch?limit=%d&keywords=%s", neteaseServer, limit, url.QueryEscape(kw))
-	r,err := http.Get(u)
+	r,err := myHttpClient.Get(u)
 	if err != nil {
 		return result,len(result),err
 	}
@@ -94,9 +98,9 @@ func Netease(kw string, limit int) (map[string]Song, int, error) {
 		if len(v.Alia) > 0 {
 			alia = v.Alia[0]
 		}
-
+		var audio,time,size,flac string
 		IDS += id + ","
-		result[id] = Song{id,name,singer,albumName,albumPic,alia, "", "", ""}
+		result[id] = Song{id,name,singer,albumName,albumPic,alia, audio, time, size, flac}
 	}
 
 	// 获取音频信息
@@ -104,7 +108,7 @@ func Netease(kw string, limit int) (map[string]Song, int, error) {
 		return result,len(result),errors.New("fuck")
 	}
 	uu := fmt.Sprintf("http://%s/song/url?id=%s",neteaseServer,IDS[:len(IDS)-1])
-	rr,err := http.Get(uu)
+	rr,err := myHttpClient.Get(uu)
 	if err != nil {
 		return result,len(result),err
 	}
@@ -120,13 +124,10 @@ func Netease(kw string, limit int) (map[string]Song, int, error) {
 	}
 	for _,vv := range audioInfo.Data {
 		id := fmt.Sprintf("%d", vv.ID)
-		audio := vv.URL
-		time := fmt.Sprintf("%dm%ds", vv.Time/1000/60, vv.Time/1000%60)
-		size := fmt.Sprintf("%.1fM", float64(vv.Size)/1024/1024)
 		t := result[id]
-		t.Audio = audio
-		t.Time = time
-		t.Size = size
+		t.Audio = vv.URL
+		t.Time = fmt.Sprintf("%dm%ds", vv.Time/1000/60, vv.Time/1000%60)
+		t.Size = fmt.Sprintf("%.1fM", float64(vv.Size)/1024/1024)
 		result[id] = t
 	}
 
