@@ -11,8 +11,13 @@ import (
 	"os"
 )
 
-// docker部署：https://github.com/Binaryify/NeteaseCloudMusicApi
-var neteaseServer = "192.168.66.102:3000"
+// 本地虚拟机docker部署
+//var neteaseServer = "192.168.66.102:3000"
+
+// 通过Vercel部署，无需服务器！！！
+// https://github.com/Binaryify/NeteaseCloudMusicApi
+// https://vercel.com/ttmars/netease-cloud-music-api
+var neteaseServer = "netease-cloud-music-api-orcin-beta.vercel.app"		// 搜索结果比较少，有缺失。部署的分支有问题？
 
 type Song struct {
 	ID string			// ID
@@ -40,22 +45,11 @@ func NeteaseAPI(kw string) []Song {
 	var r = make(map[string]Song)
 	var n int
 	var err error
-	if kw == "林俊杰" {
-		r,n,err = Netease(kw, 100)
-	}else {
-		r,n,err = Netease(kw, 50)
-	}
+	r,n,err = Netease(kw, 100)
+	log.Println(n,err)
 	if err != nil {
 		log.Println(err)
 		return []Song{{ID:"27731362", Name: "服务器错误!!!", Singer: "服务器错误!!!"}}
-	}
-	if n < 30 {
-		log.Println(kw,"二次请求！")
-		r,n,err = Netease(kw, 100)
-		if err != nil {
-			log.Println(err)
-			return []Song{{ID:"27731362", Name: "服务器错误"}}
-		}
 	}
 	for _,v := range r {
 		R = append(R, v)
