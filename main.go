@@ -4,10 +4,15 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/driver/desktop"
+	"fyneMusic/musicAPI"
 	"fyneMusic/myTheme"
 	"fyneMusic/myWidget"
 	"fyneMusic/tool"
 )
+
+func init()  {
+	myWidget.MusicData = musicAPI.NeteaseAPI("纯音乐")		// 初始化数据后再渲染界面
+}
 
 func main()  {
 	myApp := app.NewWithID("io.fyne.demo")							// 创建APP
@@ -38,4 +43,3 @@ func main()  {
 
 	myWindow.ShowAndRun()
 }
-

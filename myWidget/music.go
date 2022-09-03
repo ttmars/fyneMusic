@@ -18,8 +18,7 @@ import (
 	"time"
 )
 
-
-var musicData = musicAPI.NeteaseAPI("纯音乐")	// 歌曲信息
+var MusicData []musicAPI.Song			// 歌曲信息
 var BasePath,_ = filepath.Abs(".") // 下载路径
 var musicLength = 30					// 歌曲名称长度
 var pauseButton *widget.Button			// 暂停按钮，控制样式
@@ -45,13 +44,13 @@ func RandomPlay()  {
 		select {
 		case <-doneCh:
 			rand.Seed(time.Now().Unix())
-			if len(musicData) == 0 {
+			if len(MusicData) == 0 {
 				dialog.ShowInformation("搜索失败!", "请更换关键词！", W)
 				break
 			}
-			randomNum := rand.Intn(len(musicData))
-			musicCh <- musicData[randomNum].Audio
-			musicName.Set("随机播放：" + musicData[randomNum].Name + "_" + musicData[randomNum].Singer + ".mp3")
+			randomNum := rand.Intn(len(MusicData))
+			musicCh <- MusicData[randomNum].Audio
+			musicName.Set("随机播放：" + MusicData[randomNum].Name + "_" + MusicData[randomNum].Singer + ".mp3")
 			if pauseButton != nil {
 				pauseButton.SetIcon(theme.MediaPauseIcon())
 				pauseButton.SetText("暂停")
@@ -113,7 +112,7 @@ func MusicTable(myApp fyne.App, parent fyne.Window) fyne.CanvasObject {
 	musicLabel = container.NewGridWithColumns(3, titleLabel, singerLabel, musicLabel)
 
 	// 音乐列表
-	for _,v := range musicData {
+	for _,v := range MusicData {
 		t := oneMusic(v.Name, v.Singer, v.Audio, myApp, parent)
 		cs = append(cs, t)
 	}
@@ -175,12 +174,12 @@ func searchWidget(myApp fyne.App, parent fyne.Window)fyne.CanvasObject  {
 		searchSubmit.Disable()
 		// 清空原有数据，重新渲染
 		if searchEngine.Text == "网易云" {
-			musicData = musicAPI.NeteaseAPI(searchEntry.Text)
+			MusicData = musicAPI.NeteaseAPI(searchEntry.Text)
 		}else{
-			musicData = musicAPI.MiguAPI(searchEntry.Text)
+			MusicData = musicAPI.MiguAPI(searchEntry.Text)
 		}
 		cs = cs[0:0]
-		for _,v := range musicData {
+		for _,v := range MusicData {
 			t := oneMusic(v.Name, v.Singer, v.Audio, myApp, parent)
 			cs = append(cs, t)
 		}
