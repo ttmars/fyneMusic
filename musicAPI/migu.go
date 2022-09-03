@@ -71,7 +71,7 @@ func MiguAPI(kw string) []Song {
 		}(id)
 		wg.Wait()
 
-		for i:=0;i<len(v1);i++{
+		for i:=0;i<len(v0)-1;i++{
 			t := result[v0[i]]
 			t.Audio = v1[i]
 			t.Time = v2[i]

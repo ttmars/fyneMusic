@@ -165,7 +165,7 @@ func Netease(kw string, limit int) (map[string]Song, int, error) {
 		log.Println("s1 length:",len(s1))
 		log.Println("s2 length:",len(s2))
 	}
-	for i:=0;i<len(s2);i++ {
+	for i:=0;i<len(s1)-1;i++ {
 		t := result[s1[i]]
 		t.Lyric = s2[i]
 		result[s1[i]] = t
