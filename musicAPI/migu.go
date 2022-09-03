@@ -43,6 +43,7 @@ func MiguAPI(kw string) []Song {
 
 		audio := v.URL
 		var alia, time, size, flac, lyric string
+		var v0,v1,v2,v3,v4 []string
 		result[id] = Song{id,name,singer,albumName,albumPic,alia, audio, time, size, flac, lyric}
 		wg.Add(1)
 		go func(id string) {
@@ -62,15 +63,32 @@ func MiguAPI(kw string) []Song {
 			if err != nil {
 				return
 			}
-			t := result[data2.Data.Cid]
-			t.Audio = data2.Data.Num320
-			t.Time = fmt.Sprintf("%dm%ds", data2.Data.Duration/60,data2.Data.Duration%60)
-			t.Flac = data2.Data.Flac
-			t.Lyric = data2.Data.Lyric
-			result[data2.Data.Cid] = t
+			v0 = append(v0, id)
+			v1 = append(v1, data2.Data.Num320)
+			v2 = append(v2, fmt.Sprintf("%dm%ds", data2.Data.Duration/60,data2.Data.Duration%60))
+			v3 = append(v3, data2.Data.Flac)
+			v4 = append(v4, data2.Data.Lyric)
 		}(id)
+		wg.Wait()
+
+		for i:=0;i<len(v1);i++{
+			t := result[v0[i]]
+			t.Audio = v1[i]
+			t.Time = v2[i]
+			t.Flac = v3[i]
+			t.Lyric = v4[i]
+			result[v0[i]] = t
+		}
 	}
-	wg.Wait()
+
+
+
+	//t := result[data2.Data.Cid]
+	//t.Audio = data2.Data.Num320
+	//t.Time = fmt.Sprintf("%dm%ds", data2.Data.Duration/60,data2.Data.Duration%60)
+	//t.Flac = data2.Data.Flac
+	//t.Lyric = data2.Data.Lyric
+	//result[data2.Data.Cid] = t
 	for _,v := range result {
 		R = append(R, v)
 	}

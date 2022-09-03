@@ -132,7 +132,9 @@ func Netease(kw string, limit int) (map[string]Song, int, error) {
 		result[id] = t
 	}
 
-	// 获取歌词
+	// 获取歌词，注意map并发安全
+	var s1 []string
+	var s2 []string
 	var wg sync.WaitGroup
 	for k,_ := range result {
 		wg.Add(1)
@@ -153,12 +155,16 @@ func Netease(kw string, limit int) (map[string]Song, int, error) {
 			if err != nil {
 				return
 			}
-			t := result[ID]
-			t.Lyric = v.Lrc.Lyric
-			result[ID] = t
+			s1 = append(s1, ID)
+			s2 = append(s2, v.Lrc.Lyric)
 		}(k)
 	}
 	wg.Wait()
+	for i:=0;i<len(s1);i++ {
+		t := result[s1[i]]
+		t.Lyric = s2[i]
+		result[s1[i]] = t
+	}
 
 	// 过滤试听歌曲
 	for k,v := range result {

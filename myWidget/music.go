@@ -283,7 +283,7 @@ func createOneMusic(song musicAPI.Song, myApp fyne.App, parent fyne.Window) fyne
 // 歌曲列表组件
 func createMusicList(myApp fyne.App, parent fyne.Window) fyne.CanvasObject {
 	MusicDataContainer = make([]fyne.CanvasObject,0,30)		// 固定30
-	MusicData = musicAPI.MiguAPI("周杰伦")
+	MusicData = musicAPI.MiguAPI("林俊杰")
 	length := len(MusicData)
 	if length == 0 {
 		for i:=0;i<30;i++{
