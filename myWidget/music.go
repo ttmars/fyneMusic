@@ -37,6 +37,7 @@ var labelLength = 15					// 歌曲名称长度
 var MusicData []musicAPI.Song							// 歌曲信息
 var MusicDataContainer []fyne.CanvasObject				// 装载歌曲信息的容器
 var BasePath,_ = filepath.Abs(".") // 下载路径
+var SavePath string
 
 var musicStreamer *beep.Resampler		// 控制播放速度
 var ctrl *beep.Ctrl						// 控制暂停
@@ -159,7 +160,6 @@ func createPlayer(myApp fyne.App, parent fyne.Window) fyne.CanvasObject {
 
 // MusicMerge 整合部件
 func MusicMerge(myApp fyne.App, parent fyne.Window) fyne.CanvasObject {
-	W = parent
 	return container.NewBorder(searchWidget(myApp, parent), createPlayer(myApp, parent), nil, nil, createMusicList(myApp, parent))
 }
 
@@ -249,8 +249,7 @@ func createOneMusic(song musicAPI.Song, myApp fyne.App, parent fyne.Window) fyne
 	downloadButton = widget.NewButtonWithIcon("", theme.DownloadIcon(), func() {
 		downloadButton.Disable()
 		defer downloadButton.Enable()
-		path := myApp.Preferences().StringWithFallback("SongSavePath", BasePath)
-		path = path + "\\" + song.Name + "_" + song.Singer + ".mp3"
+		path := SavePath + "\\" + song.Name + "_" + song.Singer + ".mp3"
 		err := musicAPI.DownloadMusic(song.Audio, path)
 		if err != nil {
 			dialog.ShowInformation("下载失败!", err.Error(), parent)
@@ -262,8 +261,7 @@ func createOneMusic(song musicAPI.Song, myApp fyne.App, parent fyne.Window) fyne
 	flacDownloadButton = widget.NewButtonWithIcon("", theme.DownloadIcon(), func() {
 		flacDownloadButton.Disable()
 		defer flacDownloadButton.Enable()
-		path := myApp.Preferences().StringWithFallback("SongSavePath", BasePath)
-		path = path + "\\" + song.Name + "_" + song.Singer + ".flac"
+		path := SavePath + "\\" + song.Name + "_" + song.Singer + ".flac"
 		err := musicAPI.DownloadMusic(song.Flac, path)
 		if err != nil {
 			dialog.ShowInformation("下载失败!", err.Error(), parent)

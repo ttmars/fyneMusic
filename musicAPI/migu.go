@@ -8,12 +8,12 @@ import (
 	"sync"
 )
 
-var miguServer = "39.101.203.25:3400"
+var MiguServer string
 
 func MiguAPI(kw string) []Song {
 	var R []Song
 	var result = make(map[string]Song)
-	u := fmt.Sprintf("http://%s/search/?keyword=%s", miguServer, url.QueryEscape(kw))
+	u := fmt.Sprintf("http://%s/search/?keyword=%s", MiguServer, url.QueryEscape(kw))
 	r,err := myHttpClient.Get(u)
 	if err != nil {
 		return []Song{{ID:"27731362", Name: "服务器错误!!!", Singer: "服务器错误!!!"}}
@@ -48,7 +48,7 @@ func MiguAPI(kw string) []Song {
 		wg.Add(1)
 		go func(id string) {
 			defer wg.Done()
-			uu := fmt.Sprintf("http://%s/song/?cid=%s", miguServer, id)
+			uu := fmt.Sprintf("http://%s/song/?cid=%s", MiguServer, id)
 			rr,err := myHttpClient.Get(uu)
 			if err != nil {
 				return

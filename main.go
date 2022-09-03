@@ -4,17 +4,17 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/driver/desktop"
+	"fyneMusic/musicAPI"
 	"fyneMusic/myTheme"
 	"fyneMusic/myWidget"
 	"fyneMusic/tool"
 )
 
+
 func main()  {
-	myApp := app.NewWithID("io.fyne.demo")							// 创建APP
-	myWindow := myApp.NewWindow("网易云音乐")						// 创建窗口
-	if !tool.IsDir(myApp.Preferences().String("SongSavePath")) {	// APP参数检查
-		myApp.Preferences().SetString("SongSavePath", myWidget.BasePath)
-	}
+	myApp := app.NewWithID("hello,world!")				// 创建APP
+	myWindow := myApp.NewWindow("网易云音乐")			// 创建窗口
+	initPreferences(myApp,myWindow)							// 初始化全局变量
 
 	myApp.SetIcon(myTheme.ResourceLogoJpg)			    	// 设置logo
 	myApp.Settings().SetTheme(&myTheme.MyTheme{})			// 设置APP主题，嵌入字体，解决乱码
@@ -36,5 +36,22 @@ func main()  {
 	go myWidget.RandomPlay()		// 随机播放线程
 	go myWidget.PlayMusic()			// 播放线程
 
-	myWindow.ShowAndRun()
+	myWindow.ShowAndRun()			// 事件循环
+}
+
+// 初始化Preferences变量
+func initPreferences(a fyne.App, w fyne.Window)  {
+	myWidget.W = w
+	if !tool.IsDir(a.Preferences().String("savePath")) {
+		a.Preferences().SetString("savePath", myWidget.BasePath)
+	}
+	if a.Preferences().String("miguServer") == "" {
+		a.Preferences().SetString("miguServer", "39.101.203.25:3400")
+	}
+	if a.Preferences().String("neteaseServer") == "" {
+		a.Preferences().SetString("neteaseServer", "neteaseapi.youthsweet.com")
+	}
+	musicAPI.MiguServer = a.Preferences().String("miguServer")
+	musicAPI.NeteaseServer = a.Preferences().String("neteaseServer")
+	myWidget.SavePath = a.Preferences().String("savePath")
 }

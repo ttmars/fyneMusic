@@ -16,12 +16,13 @@ import (
 // 通过Vercel部署，无需服务器！！！
 // https://github.com/Binaryify/NeteaseCloudMusicApi
 // https://vercel.com/ttmars/netease-cloud-music-api
-//var neteaseServer = "netease-cloud-music-api-orcin-beta.vercel.app"		// 搜索结果比较少，有缺失。部署的分支有问题？还要开VPN访问？
-var neteaseServer = "neteaseapi.youthsweet.com"
+//var NeteaseServer = "netease-cloud-music-api-orcin-beta.vercel.app"
+//var NeteaseServer = "neteaseapi.youthsweet.com"
 
 // 本地虚拟机docker部署
-//var neteaseServer = "192.168.66.102:3000"
+//var NeteaseServer = "192.168.66.102:3000"
 
+var NeteaseServer string
 var myHttpClient = &http.Client{Timeout: time.Second*10}
 
 type Song struct {
@@ -71,7 +72,7 @@ func Netease(kw string, limit int) (map[string]Song, int, error) {
 		return result,len(result),errors.New("fuck")
 	}
 	// 搜索
-	u := fmt.Sprintf("http://%s/cloudsearch?limit=%d&keywords=%s", neteaseServer, limit, url.QueryEscape(kw))
+	u := fmt.Sprintf("http://%s/cloudsearch?limit=%d&keywords=%s", NeteaseServer, limit, url.QueryEscape(kw))
 	r,err := myHttpClient.Get(u)
 	if err != nil {
 		return result,len(result),err
@@ -108,7 +109,7 @@ func Netease(kw string, limit int) (map[string]Song, int, error) {
 	if len(IDS) == 0 {
 		return result,len(result),errors.New("fuck")
 	}
-	uu := fmt.Sprintf("http://%s/song/url?id=%s",neteaseServer,IDS[:len(IDS)-1])
+	uu := fmt.Sprintf("http://%s/song/url?id=%s",NeteaseServer,IDS[:len(IDS)-1])
 	rr,err := myHttpClient.Get(uu)
 	if err != nil {
 		return result,len(result),err
@@ -140,7 +141,7 @@ func Netease(kw string, limit int) (map[string]Song, int, error) {
 		wg.Add(1)
 		go func(ID string) {
 			defer wg.Done()
-			uuu := fmt.Sprintf("http://%s/lyric?id=%s",neteaseServer,ID)
+			uuu := fmt.Sprintf("http://%s/lyric?id=%s",NeteaseServer,ID)
 			rrr,err := http.Get(uuu)
 			if err != nil {
 				return
