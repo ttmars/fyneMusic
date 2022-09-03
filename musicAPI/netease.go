@@ -21,7 +21,7 @@ import (
 //var neteaseServer = "netease-cloud-music-api-orcin-beta.vercel.app"		// 搜索结果比较少，有缺失。部署的分支有问题？还要开VPN访问？
 var neteaseServer = "neteaseapi.youthsweet.com"
 
-var myHttpClient = &http.Client{Timeout: time.Second*5}
+var myHttpClient = &http.Client{Timeout: time.Second*10}
 
 type Song struct {
 	ID string			// ID
@@ -50,7 +50,7 @@ func NeteaseAPI(kw string) []Song {
 	var r = make(map[string]Song)
 	var n int
 	var err error
-	r,n,err = Netease(kw, 100)
+	r,n,err = Netease(kw, 50)
 	log.Println(n,err)
 	if err != nil {
 		log.Println(err)

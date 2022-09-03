@@ -17,7 +17,7 @@ type Screen struct {
 
 // Nav 导航栏与CanvasObject的对应关系
 var Nav = map[string]Screen{
-	"music": {"网易云音乐", MusicTable},
+	"music": {"网易云音乐", MusicMerge},
 	//"portScan": {"端口扫描", MakePortScan},
 	//"nav1": {"nav1", nav1},
 	//"nav2": {"nav2", nav2},
