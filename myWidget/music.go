@@ -3,6 +3,7 @@ package myWidget
 import (
 	"fmt"
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/dialog"
@@ -14,23 +15,30 @@ import (
 	"github.com/faiface/beep/speaker"
 	"math/rand"
 	"net/http"
+	"net/url"
 	"path/filepath"
 	"time"
 )
 
+// 按钮
+var searchSubmit *widget.Button			// 搜索按钮，防止重复点击
+var playButton *widget.Button			// 播放按钮
+var flacDownloadButton *widget.Button	// 下载按钮
+var downloadButton *widget.Button		// 下载按钮
+var pauseButton *widget.Button			// 暂停按钮
+var playNext *widget.Button				// 下一首
+
+// 标签
+var musicName = binding.NewString()		// 当前播放歌曲名称
+var speedLabel *widget.Label			// 倍速标签，控制样式
+var speedSlider *widget.Slider			// 倍速滑动条，控制样式
+var labelLength = 15					// 歌曲名称长度
 var MusicData []musicAPI.Song							// 歌曲信息
 var MusicDataContainer []fyne.CanvasObject				// 装载歌曲信息的容器
 var BasePath,_ = filepath.Abs(".") // 下载路径
-var musicLength = 30					// 歌曲名称长度
-var pauseButton *widget.Button			// 暂停按钮，控制样式
-var searchSubmit *widget.Button			// 搜索按钮，防止重复点击
-var musicName = binding.NewString()		// 当前播放歌曲名称
 
-var speedLabel *widget.Label			// 倍速标签，控制样式
-var speedSlider *widget.Slider			// 倍速滑动条，控制样式
 var musicStreamer *beep.Resampler		// 控制播放速度
 var ctrl *beep.Ctrl						// 控制暂停
-
 var musicCh = make(chan string, 1)		// 控制播放
 var doneCh = make(chan bool, 1)			// 控制随机播放
 
@@ -97,7 +105,9 @@ func PlayMusic()  {
 
 // 播放器
 func createPlayer(myApp fyne.App, parent fyne.Window) fyne.CanvasObject {
-	playNext := widget.NewButtonWithIcon("下一首", theme.MediaSkipNextIcon(), func() {
+	playNext = widget.NewButtonWithIcon("下一首", theme.MediaSkipNextIcon(), func() {
+		playNext.Disable()
+		defer playNext.Enable()
 		pauseButton.SetIcon(theme.MediaPauseIcon())
 		pauseButton.SetText("暂停")
 		if speedLabel != nil {
@@ -152,6 +162,7 @@ func searchWidget(myApp fyne.App, parent fyne.Window)fyne.CanvasObject  {
 			return
 		}
 		searchSubmit.Disable()
+		defer searchSubmit.Enable()
 
 		// 重新请求数据、创建组件并刷新
 		if searchEngine.Text == "网易云" {
@@ -168,31 +179,49 @@ func searchWidget(myApp fyne.App, parent fyne.Window)fyne.CanvasObject  {
 		}
 
 		doneCh <- true		// 搜索后自动随机播放
-		searchSubmit.Enable()
 	})
 	search := container.NewBorder(nil,nil,nil,searchSubmit, searchEngine)
 	search = container.NewGridWithColumns(5, searchEntry, search)
 
 	// 音乐标签
 	titleLabel := widget.NewLabelWithStyle("音乐标题", fyne.TextAlignLeading, fyne.TextStyle{Bold:true})
-	singerLabel := widget.NewLabelWithStyle("歌手", fyne.TextAlignLeading, fyne.TextStyle{Bold:true})
-	linkLabel := widget.NewLabelWithStyle("点播", fyne.TextAlignLeading, fyne.TextStyle{Bold:true})
-	downloadLabel := widget.NewLabelWithStyle("下载", fyne.TextAlignLeading, fyne.TextStyle{Bold:true})
-	musicLabel := container.NewGridWithColumns(2, linkLabel, downloadLabel)
-	musicLabel = container.NewGridWithColumns(3, titleLabel, singerLabel, musicLabel)
+	singerLabel := widget.NewLabel("歌手")
+	linkLabel := widget.NewLabel("点播")
+	albumLabel := widget.NewLabel("专辑")
+	downloadLabel := widget.NewLabelWithStyle("标准", fyne.TextAlignLeading, fyne.TextStyle{Bold:true})
+	flacDownloadLabel := widget.NewLabelWithStyle("无损", fyne.TextAlignLeading, fyne.TextStyle{Bold:true})
+	down := container.NewGridWithColumns(2, downloadLabel, flacDownloadLabel)
+	musicLabel := container.NewGridWithColumns(2, linkLabel, down)
+	musicLabel = container.NewGridWithColumns(4, titleLabel, singerLabel,albumLabel,musicLabel)
 
 	return container.NewVBox(search, musicLabel)
 }
 
-func createOneMusic(song musicAPI.Song, myApp fyne.App, parent fyne.Window) fyne.CanvasObject {
-	r := []rune(song.Name)
-	if len(r) > musicLength {
-		r = r[:musicLength]
-		song.Name = string(r)
+// 字符串长度裁剪
+func cutString(s string, n int) string {
+	r := []rune(s)
+	if len(r) <= n {
+		return s
+	}else{
+		return string(r[:n])
 	}
-	titleLable := widget.NewLabel(song.Name)
-	singerLable := widget.NewLabel(song.Singer)
-	playButton := widget.NewButtonWithIcon("", theme.MediaPlayIcon(), func() {
+}
+
+func createOneMusic(song musicAPI.Song, myApp fyne.App, parent fyne.Window) fyne.CanvasObject {
+	titleLabel := widget.NewLabel(cutString(song.Name, labelLength))
+	singerLabel := widget.NewLabel(cutString(song.Singer, labelLength))
+	u,_ := url.Parse(song.AlbumPic)
+	albumLabel := widget.NewHyperlink(cutString(song.AlbumName, labelLength), u)
+	albumLabel.OnTapped = func() {
+		w := myApp.NewWindow("image")
+		w.CenterOnScreen()
+		w.SetContent(CreateImage(song.AlbumPic))
+		w.Resize(fyne.NewSize(400,400))
+		w.Show()
+	}
+	playButton = widget.NewButtonWithIcon("", theme.MediaPlayIcon(), func() {
+		playButton.Disable()
+		defer playButton.Enable()
 		pauseButton.SetIcon(theme.MediaPauseIcon())
 		pauseButton.SetText("暂停")
 		musicName.Set("当前点播：" + song.Name + "_" + song.Singer + ".mp3")
@@ -200,7 +229,9 @@ func createOneMusic(song musicAPI.Song, myApp fyne.App, parent fyne.Window) fyne
 		speedSlider.SetValue(1)
 		musicCh <- song.Audio
 	})
-	downloadButton := widget.NewButtonWithIcon("", theme.DownloadIcon(), func() {
+	downloadButton = widget.NewButtonWithIcon("", theme.DownloadIcon(), func() {
+		downloadButton.Disable()
+		defer downloadButton.Enable()
 		path := myApp.Preferences().StringWithFallback("SongSavePath", BasePath)
 		path = path + "\\" + song.Name + "_" + song.Singer + ".mp3"
 		err := musicAPI.DownloadMusic(song.Audio, path)
@@ -211,8 +242,25 @@ func createOneMusic(song musicAPI.Song, myApp fyne.App, parent fyne.Window) fyne
 		}
 	})
 
-	onemusic := container.NewGridWithColumns(2, playButton, downloadButton)
-	onemusic = container.NewGridWithColumns(3, titleLable, singerLable,onemusic)
+	flacDownloadButton = widget.NewButtonWithIcon("", theme.DownloadIcon(), func() {
+		flacDownloadButton.Disable()
+		defer flacDownloadButton.Enable()
+		path := myApp.Preferences().StringWithFallback("SongSavePath", BasePath)
+		path = path + "\\" + song.Name + "_" + song.Singer + ".flac"
+		err := musicAPI.DownloadMusic(song.Flac, path)
+		if err != nil {
+			dialog.ShowInformation("下载失败!", err.Error(), parent)
+		}else{
+			dialog.ShowInformation("下载成功!", path, parent)
+		}
+	})
+	if song.Flac == "" {
+		flacDownloadButton.Disable()
+	}
+
+	down := container.NewGridWithColumns(2, downloadButton, flacDownloadButton)
+	onemusic := container.NewGridWithColumns(2, playButton, down)
+	onemusic = container.NewGridWithColumns(4, titleLabel, singerLabel,albumLabel,onemusic)
 	return onemusic
 }
 
@@ -240,4 +288,13 @@ func createMusicList(myApp fyne.App, parent fyne.Window) fyne.CanvasObject {
 		}
 	}
 	return container.NewVScroll(container.NewVBox(MusicDataContainer...))
+}
+
+// CreateImage 创建一个图片
+func CreateImage(pic string) *canvas.Image {
+	r,_ := http.Get(pic)
+	defer r.Body.Close()
+	image := canvas.NewImageFromReader(r.Body, "jpg")
+	//image.FillMode = canvas.ImageFillOriginal
+	return image
 }

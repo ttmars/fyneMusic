@@ -113,5 +113,7 @@ func makeNav(setTutorial func(tutorial Screen), loadPrevious bool) fyne.CanvasOb
 	//	}),
 	//)
 
+	//var ImageWall *canvas.Image = canvas.NewImageFromFile("D:\\project\\goProject\\fyneMusic\\myTheme\\wall.jpg")
+	//return container.NewBorder(tree, nil, nil, nil, ImageWall)
 	return container.NewBorder(nil, nil, nil, nil, tree)
 }
