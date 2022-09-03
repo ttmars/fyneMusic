@@ -1,29 +1,49 @@
 package main
 
 import (
-	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/app"
-	"fyne.io/fyne/v2/canvas"
+	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
 )
 
-func main() {
-	myApp := app.New()
-	w := myApp.NewWindow("Image")
-
-	u := "https://mcontent.migu.cn/newlv2/new/album/20210410/1000002142/s_OiN9DXXpHPOLD2Td.jpg"
-
-	image := createImage(u)
-
-	w.SetContent(image)
-
-	w.ShowAndRun()
+type LyricInfo struct {
+	Sgc       bool `json:"sgc"`
+	Sfy       bool `json:"sfy"`
+	Qfy       bool `json:"qfy"`
+	LyricUser struct {
+		ID       int    `json:"id"`
+		Status   int    `json:"status"`
+		Demand   int    `json:"demand"`
+		Userid   int    `json:"userid"`
+		Nickname string `json:"nickname"`
+		Uptime   int64  `json:"uptime"`
+	} `json:"lyricUser"`
+	Lrc struct {
+		Version int    `json:"version"`
+		Lyric   string `json:"lyric"`
+	} `json:"lrc"`
+	Klyric struct {
+		Version int    `json:"version"`
+		Lyric   string `json:"lyric"`
+	} `json:"klyric"`
+	Tlyric struct {
+		Version int    `json:"version"`
+		Lyric   string `json:"lyric"`
+	} `json:"tlyric"`
+	Romalrc struct {
+		Version int    `json:"version"`
+		Lyric   string `json:"lyric"`
+	} `json:"romalrc"`
+	Code int `json:"code"`
 }
 
-func createImage(pic string) fyne.CanvasObject {
-	r,_ := http.Get(pic)
+func main() {
+	u := "http://192.168.66.102:3000/lyric?id=27731362"
+	r,_ := http.Get(u)
 	defer r.Body.Close()
-	image := canvas.NewImageFromReader(r.Body, "jpg")
-	//image.FillMode = canvas.ImageFillOriginal
-	return image
+	b,_ := io.ReadAll(r.Body)
+	var v LyricInfo
+	_ = json.Unmarshal(b, &v)
+	fmt.Println(v.Lrc.Lyric)
 }

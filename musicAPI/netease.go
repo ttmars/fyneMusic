@@ -9,17 +9,18 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"sync"
 	"time"
 )
-
-// 本地虚拟机docker部署
-//var neteaseServer = "192.168.66.102:3000"
 
 // 通过Vercel部署，无需服务器！！！
 // https://github.com/Binaryify/NeteaseCloudMusicApi
 // https://vercel.com/ttmars/netease-cloud-music-api
 //var neteaseServer = "netease-cloud-music-api-orcin-beta.vercel.app"		// 搜索结果比较少，有缺失。部署的分支有问题？还要开VPN访问？
-var neteaseServer = "neteaseapi.youthsweet.com"
+//var neteaseServer = "neteaseapi.youthsweet.com"
+
+// 本地虚拟机docker部署
+var neteaseServer = "192.168.66.102:3000"
 
 var myHttpClient = &http.Client{Timeout: time.Second*10}
 
@@ -34,6 +35,7 @@ type Song struct {
 	Time string			// 时长
 	Size string			// 大小
 	Flac string			// flac格式链接，仅咪咕音乐
+	Lyric string		// 歌词
 }
 
 func test() {
@@ -48,10 +50,8 @@ func test() {
 func NeteaseAPI(kw string) []Song {
 	var R = make([]Song, 0, 30)
 	var r = make(map[string]Song)
-	var n int
 	var err error
-	r,n,err = Netease(kw, 50)
-	log.Println(n,err)
+	r,_,err = Netease(kw, 50)
 	if err != nil {
 		log.Println(err)
 		return []Song{{ID:"27731362", Name: "服务器错误!!!", Singer: "服务器错误!!!"}}
@@ -99,9 +99,9 @@ func Netease(kw string, limit int) (map[string]Song, int, error) {
 		if len(v.Alia) > 0 {
 			alia = v.Alia[0]
 		}
-		var audio,time,size,flac string
+		var audio,time,size,flac,lyric string
 		IDS += id + ","
-		result[id] = Song{id,name,singer,albumName,albumPic,alia, audio, time, size, flac}
+		result[id] = Song{id,name,singer,albumName,albumPic,alia, audio, time, size, flac, lyric}
 	}
 
 	// 获取音频信息
@@ -132,6 +132,34 @@ func Netease(kw string, limit int) (map[string]Song, int, error) {
 		result[id] = t
 	}
 
+	// 获取歌词
+	var wg sync.WaitGroup
+	for k,_ := range result {
+		wg.Add(1)
+		go func(ID string) {
+			defer wg.Done()
+			uuu := fmt.Sprintf("http://%s/lyric?id=%s",neteaseServer,ID)
+			rrr,err := http.Get(uuu)
+			if err != nil {
+				return
+			}
+			defer r.Body.Close()
+			bbb,err := io.ReadAll(rrr.Body)
+			if err != nil {
+				return
+			}
+			var v LyricInfo
+			err = json.Unmarshal(bbb, &v)
+			if err != nil {
+				return
+			}
+			t := result[ID]
+			t.Lyric = v.Lrc.Lyric
+			result[ID] = t
+		}(k)
+	}
+	wg.Wait()
+
 	// 过滤试听歌曲
 	for k,v := range result {
 		if v.Time == "0m30s" || v.Time == "0m0s" {
@@ -161,6 +189,37 @@ func DownloadMusic(url, path string) error  {
 		return fmt.Errorf("os.WriteFile:%s", err.Error())
 	}
 	return nil
+}
+
+type LyricInfo struct {
+	Sgc       bool `json:"sgc"`
+	Sfy       bool `json:"sfy"`
+	Qfy       bool `json:"qfy"`
+	LyricUser struct {
+		ID       int    `json:"id"`
+		Status   int    `json:"status"`
+		Demand   int    `json:"demand"`
+		Userid   int    `json:"userid"`
+		Nickname string `json:"nickname"`
+		Uptime   int64  `json:"uptime"`
+	} `json:"lyricUser"`
+	Lrc struct {
+		Version int    `json:"version"`
+		Lyric   string `json:"lyric"`
+	} `json:"lrc"`
+	Klyric struct {
+		Version int    `json:"version"`
+		Lyric   string `json:"lyric"`
+	} `json:"klyric"`
+	Tlyric struct {
+		Version int    `json:"version"`
+		Lyric   string `json:"lyric"`
+	} `json:"tlyric"`
+	Romalrc struct {
+		Version int    `json:"version"`
+		Lyric   string `json:"lyric"`
+	} `json:"romalrc"`
+	Code int `json:"code"`
 }
 
 type NeteaseAudioInfo struct {

@@ -5,7 +5,6 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
@@ -29,7 +28,8 @@ var pauseButton *widget.Button			// 暂停按钮
 var playNext *widget.Button				// 下一首
 
 // 标签
-var musicName = binding.NewString()		// 当前播放歌曲名称
+var playerLabel *widget.Hyperlink
+//var musicName = binding.NewString()		// 当前播放歌曲名称
 var speedLabel *widget.Label			// 倍速标签，控制样式
 var speedSlider *widget.Slider			// 倍速滑动条，控制样式
 var labelLength = 15					// 歌曲名称长度
@@ -46,6 +46,7 @@ var W fyne.Window
 // RandomPlay 随机播放线程
 func RandomPlay()  {
 	doneCh <- true		// 启动后，随机播放歌曲
+	lyricEntry.Hide()
 	for {
 		select {
 		case <-doneCh:
@@ -56,7 +57,10 @@ func RandomPlay()  {
 			}
 			randomNum := rand.Intn(len(MusicData))
 			musicCh <- MusicData[randomNum].Audio
-			musicName.Set("随机播放：" + MusicData[randomNum].Name + "_" + MusicData[randomNum].Singer + ".mp3")
+			lyricEntry.SetText(MusicData[randomNum].Lyric)
+			lyricEntry.Refresh()
+			playerLabel.SetText("随机播放：" + MusicData[randomNum].Name + "_" + MusicData[randomNum].Singer + ".mp3")
+			playerLabel.Refresh()
 			if pauseButton != nil {
 				pauseButton.SetIcon(theme.MediaPauseIcon())
 				pauseButton.SetText("暂停")
@@ -116,7 +120,16 @@ func createPlayer(myApp fyne.App, parent fyne.Window) fyne.CanvasObject {
 		}
 		doneCh <- true
 	})
-	playerLabel := widget.NewLabelWithData(musicName)
+	playerLabel = widget.NewHyperlink("hello", nil)
+	playerLabel.OnTapped = func() {
+		if lyricEntry.Visible() {
+			lyricEntry.Hide()
+		}else{
+			lyricEntry.Show()
+			lyricEntry.Refresh()
+		}
+	}
+
 	speedSlider = widget.NewSlider(0.5,1.5)
 	speedSlider.SetValue(1)
 	speedSlider.Step = 0.1
@@ -222,9 +235,12 @@ func createOneMusic(song musicAPI.Song, myApp fyne.App, parent fyne.Window) fyne
 	playButton = widget.NewButtonWithIcon("", theme.MediaPlayIcon(), func() {
 		playButton.Disable()
 		defer playButton.Enable()
+		lyricEntry.SetText(song.Lyric)
+		lyricEntry.Refresh()
 		pauseButton.SetIcon(theme.MediaPauseIcon())
 		pauseButton.SetText("暂停")
-		musicName.Set("当前点播：" + song.Name + "_" + song.Singer + ".mp3")
+		playerLabel.SetText("当前点播：" + song.Name + "_" + song.Singer + ".mp3")
+		playerLabel.Refresh()
 		speedLabel.SetText("1.0倍速")
 		speedSlider.SetValue(1)
 		musicCh <- song.Audio
