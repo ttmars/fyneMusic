@@ -11,6 +11,9 @@ import (
 var MiguServer string
 
 func MiguAPI(kw string) []Song {
+	if kw == "" {
+		return []Song{{ID:"27731362", Name: "服务器错误!!!", Singer: "服务器错误!!!"}}
+	}
 	var R []Song
 	var result = make(map[string]Song)
 	u := fmt.Sprintf("http://%s/search/?keyword=%s", MiguServer, url.QueryEscape(kw))
@@ -28,7 +31,6 @@ func MiguAPI(kw string) []Song {
 	if err != nil {
 		return []Song{{ID:"27731362", Name: "服务器错误!!!", Singer: "服务器错误!!!"}}
 	}
-	var wg sync.WaitGroup
 	for _,v := range data1.Data.List {
 		id := v.Cid
 		name := v.Name
@@ -40,11 +42,15 @@ func MiguAPI(kw string) []Song {
 		}
 		albumName := v.Album.Name
 		albumPic := v.Album.PicURL
-
 		audio := v.URL
 		var alia, time, size, flac, lyric string
-		var v0,v1,v2,v3,v4 []string
 		result[id] = Song{id,name,singer,albumName,albumPic,alia, audio, time, size, flac, lyric}
+	}
+
+	// 音频链接
+	var r2 [][]string
+	var wg sync.WaitGroup
+	for k,_ := range result{
 		wg.Add(1)
 		go func(id string) {
 			defer wg.Done()
@@ -63,24 +69,22 @@ func MiguAPI(kw string) []Song {
 			if err != nil {
 				return
 			}
-			v0 = append(v0, id)
-			v1 = append(v1, data2.Data.Num320)
-			v2 = append(v2, fmt.Sprintf("%dm%ds", data2.Data.Duration/60,data2.Data.Duration%60))
-			v3 = append(v3, data2.Data.Flac)
-			v4 = append(v4, data2.Data.Lyric)
-		}(id)
-		wg.Wait()
+			r2 = append(r2, []string{id, data2.Data.Num320, fmt.Sprintf("%dm%ds", data2.Data.Duration/60,data2.Data.Duration%60), data2.Data.Flac, data2.Data.Lyric})
+		}(k)
+	}
+	wg.Wait()
 
-		for i:=0;i<len(v0)-1;i++{
-			t := result[v0[i]]
-			t.Audio = v1[i]
-			t.Time = v2[i]
-			t.Flac = v3[i]
-			t.Lyric = v4[i]
-			result[v0[i]] = t
-		}
+	// 合并结果
+	for i:=0;i<len(r2);i++{
+		t := result[r2[i][0]]
+		t.Audio = r2[i][1]
+		t.Time = r2[i][2]
+		t.Flac = r2[i][3]
+		t.Lyric = r2[i][4]
+		result[r2[i][0]] = t
 	}
 
+	// 返回结果
 	for _,v := range result {
 		R = append(R, v)
 	}

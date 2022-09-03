@@ -2,10 +2,8 @@ package musicAPI
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -39,48 +37,23 @@ type Song struct {
 	Lyric string		// 歌词
 }
 
-func test() {
-	kw := "林俊杰"
-	r := NeteaseAPI(kw)
-	fmt.Println(len(r))
-	for _,v := range r {
-		fmt.Println(v)
-	}
-}
-
 func NeteaseAPI(kw string) []Song {
-	var R = make([]Song, 0, 30)
-	var r = make(map[string]Song)
-	var err error
-	r,_,err = Netease(kw, 50)
-	if err != nil {
-		log.Println(err)
+	if kw == "" {
 		return []Song{{ID:"27731362", Name: "服务器错误!!!", Singer: "服务器错误!!!"}}
 	}
-	for _,v := range r {
-		R = append(R, v)
-	}
-	if len(R) > 30 {
-		R = R[:30]
-	}
-	return R
-}
-
-func Netease(kw string, limit int) (map[string]Song, int, error) {
+	limit := 50
+	var R []Song
 	var result = make(map[string]Song)
-	if kw == "" || limit < 1 {
-		return result,len(result),errors.New("fuck")
-	}
 	// 搜索
 	u := fmt.Sprintf("http://%s/cloudsearch?limit=%d&keywords=%s", NeteaseServer, limit, url.QueryEscape(kw))
 	r,err := myHttpClient.Get(u)
 	if err != nil {
-		return result,len(result),err
+		return []Song{{ID:"27731362", Name: "服务器错误!!!", Singer: "服务器错误!!!"}}
 	}
 	defer r.Body.Close()
 	b,err := io.ReadAll(r.Body)
 	if err != nil {
-		return result,len(result),err
+		return []Song{{ID:"27731362", Name: "服务器错误!!!", Singer: "服务器错误!!!"}}
 	}
 	var searchDate NeteaseSearchInfo
 	_ = json.Unmarshal(b, &searchDate)			// 负数解析到int报错，不影响
@@ -107,22 +80,22 @@ func Netease(kw string, limit int) (map[string]Song, int, error) {
 
 	// 获取音频信息
 	if len(IDS) == 0 {
-		return result,len(result),errors.New("fuck")
+		return []Song{{ID:"27731362", Name: "服务器错误!!!", Singer: "服务器错误!!!"}}
 	}
 	uu := fmt.Sprintf("http://%s/song/url?id=%s",NeteaseServer,IDS[:len(IDS)-1])
 	rr,err := myHttpClient.Get(uu)
 	if err != nil {
-		return result,len(result),err
+		return []Song{{ID:"27731362", Name: "服务器错误!!!", Singer: "服务器错误!!!"}}
 	}
 	defer rr.Body.Close()
 	bb,err := io.ReadAll(rr.Body)
 	if err != nil {
-		return result,len(result),err
+		return []Song{{ID:"27731362", Name: "服务器错误!!!", Singer: "服务器错误!!!"}}
 	}
 	var audioInfo NeteaseAudioInfo
 	err = json.Unmarshal(bb, &audioInfo)
 	if err != nil {
-		return result,len(result),err
+		return []Song{{ID:"27731362", Name: "服务器错误!!!", Singer: "服务器错误!!!"}}
 	}
 	for _,vv := range audioInfo.Data {
 		id := fmt.Sprintf("%d", vv.ID)
@@ -134,8 +107,7 @@ func Netease(kw string, limit int) (map[string]Song, int, error) {
 	}
 
 	// 获取歌词，注意map并发安全
-	var s1 []string
-	var s2 []string
+	var r2 [][]string
 	var wg sync.WaitGroup
 	for k,_ := range result {
 		wg.Add(1)
@@ -156,29 +128,28 @@ func Netease(kw string, limit int) (map[string]Song, int, error) {
 			if err != nil {
 				return
 			}
-			s1 = append(s1, ID)
-			s2 = append(s2, v.Lrc.Lyric)
+			r2 = append(r2, []string{ID, v.Lrc.Lyric})
 		}(k)
 	}
 	wg.Wait()
-	if len(s1) != len(s2) {
-		log.Println("s1 length:",len(s1))
-		log.Println("s2 length:",len(s2))
-	}
-	for i:=0;i<len(s1)-1;i++ {
-		t := result[s1[i]]
-		t.Lyric = s2[i]
-		result[s1[i]] = t
+	for i:=0;i<len(r2);i++ {
+		t := result[r2[i][0]]
+		t.Lyric = r2[i][1]
+		result[r2[i][0]] = t
 	}
 
-	// 过滤试听歌曲
+	// 过滤
 	for k,v := range result {
 		if v.Time == "0m30s" || v.Time == "0m0s" {
 			delete(result, k)
 		}
 	}
 
-	return result,len(result),nil
+	// 返回结果
+	for _,v := range result {
+		R = append(R, v)
+	}
+	return R
 }
 
 // DownloadMusic 下载歌曲
