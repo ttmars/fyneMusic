@@ -81,16 +81,14 @@ func PlayMusic()  {
 		case link = <-musicCh:
 			r,err := http.Get(link)
 			if err != nil || r.StatusCode != 200 {
-				//log.Fatal(err)
-				dialog.ShowInformation("链接失效!", "请重新搜索刷新数据！", W)
+				dialog.ShowInformation("播放失败", "该歌曲链接已失效.", W)
 				break
 			}
 			defer r.Body.Close()
 
 			streamer, musicFormat, err := mp3.Decode(r.Body)		// 原始音频流
 			if err != nil {
-				//log.Fatal(err)
-				dialog.ShowInformation("链接失效!", "请重新搜索刷新数据！", W)
+				dialog.ShowInformation("播放失败", "该歌曲链接已失效.", W)
 				break
 			}
 			defer streamer.Close()
