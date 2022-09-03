@@ -41,7 +41,7 @@ func NeteaseAPI(kw string) []Song {
 	if kw == "" {
 		return []Song{{ID:"27731362", Name: "服务器错误!!!", Singer: "服务器错误!!!"}}
 	}
-	limit := 50
+	limit := 100
 	var R []Song
 	var result = make(map[string]Song)
 	// 搜索
