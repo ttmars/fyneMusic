@@ -12,6 +12,7 @@ import (
 	"github.com/faiface/beep"
 	"github.com/faiface/beep/mp3"
 	"github.com/faiface/beep/speaker"
+	"log"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -81,6 +82,7 @@ func PlayMusic()  {
 		case link = <-musicCh:
 			r,err := http.Get(link)
 			if err != nil || r.StatusCode != 200 {
+				log.Println("播放失败：", link)
 				dialog.ShowInformation("播放失败", "该歌曲链接已失效.", W)
 				break
 			}
@@ -88,6 +90,7 @@ func PlayMusic()  {
 
 			streamer, musicFormat, err := mp3.Decode(r.Body)		// 原始音频流
 			if err != nil {
+				log.Println("播放失败：", link)
 				dialog.ShowInformation("播放失败", "该歌曲链接已失效.", W)
 				break
 			}
@@ -281,7 +284,7 @@ func createOneMusic(song musicAPI.Song, myApp fyne.App, parent fyne.Window) fyne
 // 歌曲列表组件
 func createMusicList(myApp fyne.App, parent fyne.Window) fyne.CanvasObject {
 	MusicDataContainer = make([]fyne.CanvasObject,0,30)		// 固定30
-	MusicData = musicAPI.MiguAPI("林俊杰")
+	MusicData = musicAPI.MiguAPI("周杰伦")
 	length := len(MusicData)
 	if length == 0 {
 		for i:=0;i<30;i++{
