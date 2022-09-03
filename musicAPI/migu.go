@@ -81,14 +81,6 @@ func MiguAPI(kw string) []Song {
 		}
 	}
 
-
-
-	//t := result[data2.Data.Cid]
-	//t.Audio = data2.Data.Num320
-	//t.Time = fmt.Sprintf("%dm%ds", data2.Data.Duration/60,data2.Data.Duration%60)
-	//t.Flac = data2.Data.Flac
-	//t.Lyric = data2.Data.Lyric
-	//result[data2.Data.Cid] = t
 	for _,v := range result {
 		R = append(R, v)
 	}

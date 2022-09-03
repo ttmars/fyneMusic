@@ -8,6 +8,7 @@ import (
 	"fyneMusic/myTheme"
 	"fyneMusic/myWidget"
 	"fyneMusic/tool"
+	"log"
 )
 
 
@@ -15,6 +16,8 @@ func main()  {
 	myApp := app.NewWithID("hello,world!")				// 创建APP
 	myWindow := myApp.NewWindow("网易云音乐")			// 创建窗口
 	initPreferences(myApp,myWindow)							// 初始化全局变量
+	log.Println("migu server:", musicAPI.MiguServer)
+	log.Println("net server:", musicAPI.NeteaseServer)
 
 	myApp.SetIcon(myTheme.ResourceLogoJpg)			    	// 设置logo
 	myApp.Settings().SetTheme(&myTheme.MyTheme{})			// 设置APP主题，嵌入字体，解决乱码
