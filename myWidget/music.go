@@ -188,14 +188,18 @@ func searchWidget(myApp fyne.App, parent fyne.Window)fyne.CanvasObject  {
 				MusicData = x.([]musicAPI.Song)
 			}else{
 				MusicData = musicAPI.NeteaseAPI(searchEntry.Text)
-				musicCache.SetDefault("网易云"+searchEntry.Text, MusicData)
+				if len(MusicData) > 1 {
+					musicCache.SetDefault("网易云"+searchEntry.Text, MusicData)
+				}
 			}
 		}else{
 			if x, found := musicCache.Get("咪咕"+searchEntry.Text); found {
 				MusicData = x.([]musicAPI.Song)
 			}else{
 				MusicData = musicAPI.MiguAPI(searchEntry.Text)
-				musicCache.SetDefault("咪咕"+searchEntry.Text, MusicData)
+				if len(MusicData) > 1 {
+					musicCache.SetDefault("咪咕"+searchEntry.Text, MusicData)
+				}
 			}
 		}
 
