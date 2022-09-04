@@ -12,6 +12,7 @@ import (
 	"github.com/faiface/beep"
 	"github.com/faiface/beep/mp3"
 	"github.com/faiface/beep/speaker"
+	"github.com/patrickmn/go-cache"
 	"log"
 	"math/rand"
 	"net/http"
@@ -19,6 +20,9 @@ import (
 	"path/filepath"
 	"time"
 )
+
+// 缓存
+var musicCache = cache.New(15*time.Minute, 3*time.Minute)		// 默认过期时间15min，每隔三分钟清理过期项
 
 // 按钮
 var searchSubmit *widget.Button			// 搜索按钮，防止重复点击
@@ -168,7 +172,7 @@ func searchWidget(myApp fyne.App, parent fyne.Window)fyne.CanvasObject  {
 	searchEntry := widget.NewEntry()
 	searchEntry.SetPlaceHolder("遇见萤火")
 
-	searchEngine := widget.NewSelectEntry([]string{"网易云", "咪咕音乐"})
+	searchEngine := widget.NewSelectEntry([]string{"网易云", "咪咕"})
 	searchEngine.SetText("网易云")
 
 	searchSubmit = widget.NewButtonWithIcon("搜索",theme.SearchIcon(), func() {
@@ -180,9 +184,19 @@ func searchWidget(myApp fyne.App, parent fyne.Window)fyne.CanvasObject  {
 
 		// 重新请求数据、创建组件并刷新
 		if searchEngine.Text == "网易云" {
-			MusicData = musicAPI.NeteaseAPI(searchEntry.Text)
+			if x, found := musicCache.Get("网易云"+searchEntry.Text); found {
+				MusicData = x.([]musicAPI.Song)
+			}else{
+				MusicData = musicAPI.NeteaseAPI(searchEntry.Text)
+				musicCache.SetDefault("网易云"+searchEntry.Text, MusicData)
+			}
 		}else{
-			MusicData = musicAPI.MiguAPI(searchEntry.Text)
+			if x, found := musicCache.Get("咪咕"+searchEntry.Text); found {
+				MusicData = x.([]musicAPI.Song)
+			}else{
+				MusicData = musicAPI.MiguAPI(searchEntry.Text)
+				musicCache.SetDefault("咪咕"+searchEntry.Text, MusicData)
+			}
 		}
 
 		for i,song := range MusicData {

@@ -5,6 +5,7 @@ go 1.18
 require (
 	fyne.io/fyne/v2 v2.2.3
 	github.com/faiface/beep v1.1.0
+	github.com/patrickmn/go-cache v2.1.0+incompatible
 )
 
 require (
