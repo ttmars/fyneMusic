@@ -186,8 +186,10 @@ func searchWidget(myApp fyne.App, parent fyne.Window)fyne.CanvasObject  {
 	searchEntry := widget.NewEntry()
 	searchEntry.SetPlaceHolder("遇见萤火")
 
-	searchEngine := widget.NewSelectEntry([]string{"网易云", "咪咕"})
-	searchEngine.SetText("网易云")
+	//searchEngine := widget.NewSelectEntry([]string{"网易云", "咪咕"})
+	//searchEngine.SetText("网易云")
+	searchEngine := widget.NewSelectEntry([]string{"咪咕", "网易云"})
+	searchEngine.SetText("咪咕")
 
 	searchSubmit = widget.NewButtonWithIcon("搜索",theme.SearchIcon(), func() {
 		if searchEntry.Text == "" {
