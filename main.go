@@ -36,8 +36,9 @@ func main()  {
 	myWindow.SetMainMenu(myWidget.MakeMyMenu(myApp, myWindow))		// 创建菜单
 	myWindow.SetContent(myWidget.MakeNav(myApp, myWindow))			// 创建导航
 
-	go myWidget.RandomPlay()		// 随机播放线程
-	go myWidget.PlayMusic()			// 播放线程
+	go myWidget.RandomPlay()				// 随机播放线程
+	go myWidget.PlayMusic()					// 播放线程
+	go myWidget.UpdateProgressLabel()		// 播放进度更新线程
 
 	myWindow.ShowAndRun()			// 事件循环
 }
