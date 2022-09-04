@@ -22,7 +22,7 @@ import (
 )
 
 // 缓存
-var musicCache = cache.New(15*time.Minute, 3*time.Minute)		// 默认过期时间15min，每隔三分钟清理过期项
+var musicCache = cache.New(20*time.Minute, 5*time.Minute)
 
 // 按钮
 var searchSubmit *widget.Button			// 搜索按钮，防止重复点击
