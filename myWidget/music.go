@@ -129,7 +129,7 @@ func PlayMusic()  {
 func UpdateProgressLabel()  {
 	for {
 		select {
-		case <-time.After(time.Second):
+		case <-time.After(time.Millisecond * 500):
 			cur := musicFormat.SampleRate.D(streamer.Position()).Round(time.Second)
 
 			keyTime := fmt.Sprintf("%02d:%02d", int(cur.Seconds())/60, int(cur.Seconds())%60)
