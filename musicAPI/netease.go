@@ -8,13 +8,11 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"sync"
 	"time"
 )
 
 var NeteaseServer string
 var myHttpClient = &http.Client{Timeout: time.Second*10}
-var LyricCh = make(chan bool, 1)		// 控制异步请求歌词
 
 type Song struct {
 	ID string			// ID
@@ -51,39 +49,6 @@ func GetLyricByID(id string) string {
 		return ""
 	}
 	return v.Lrc.Lyric
-}
-
-// GetLyricAll 并发获取歌词,容易触发风控，不采用
-func GetLyricAll(s []Song) ([]Song,map[string]string) {
-	var IDLyric = make(map[string]string)
-	var wg sync.WaitGroup
-	for i:=0;i<len(s);i++{
-		wg.Add(1)
-		go func(index int) {
-			defer wg.Done()
-			uuu := fmt.Sprintf("http://%s/lyric?id=%s",NeteaseServer,s[index].ID)
-			rrr,err := http.Get(uuu)
-			if err != nil {
-				return
-			}
-			defer rrr.Body.Close()
-			bbb,err := io.ReadAll(rrr.Body)
-			if err != nil {
-				return
-			}
-			var v LyricInfo
-			err = json.Unmarshal(bbb, &v)
-			if err != nil {
-				return
-			}
-			s[index].Lyric = v.Lrc.Lyric
-		}(i)
-	}
-	wg.Wait()
-	for _,v := range s {
-		IDLyric[v.ID] = v.Lyric
-	}
-	return s,IDLyric
 }
 
 func NeteaseAPI(kw string) []Song {
