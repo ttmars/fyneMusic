@@ -15,13 +15,16 @@ func MiguAPI(kw string) []Song {
 		return []Song{{ID:"27731362", Name: "服务器错误!!!", Singer: "服务器错误!!!"}}
 	}
 	var R []Song
-	var result = make(map[string]Song)
+	//var result = make(map[string]Song)
 	u := fmt.Sprintf("http://%s/search/?keyword=%s", MiguServer, url.QueryEscape(kw))
 	r,err := myHttpClient.Get(u)
 	if err != nil {
 		return []Song{{ID:"27731362", Name: "服务器错误!!!", Singer: "服务器错误!!!"}}
 	}
 	defer r.Body.Close()
+	if r.StatusCode != 200 {
+		return []Song{{ID:"27731362", Name: "服务器错误!!!", Singer: "服务器错误!!!"}}
+	}
 	b,err := io.ReadAll(r.Body)
 	if err != nil {
 		return []Song{{ID:"27731362", Name: "服务器错误!!!", Singer: "服务器错误!!!"}}
@@ -38,23 +41,22 @@ func MiguAPI(kw string) []Song {
 		if len(v.Artists) == 1 {
 			singer = v.Artists[0].Name
 		}else if len(v.Artists) == 2 {
-			singer = v.Artists[0].Name + v.Artists[1].Name
+			singer = v.Artists[0].Name + "/" +  v.Artists[1].Name
 		}
 		albumName := v.Album.Name
 		albumPic := v.Album.PicURL
 		audio := v.URL
 		var alia, time, size, flac, lyric string
-		result[id] = Song{id,name,singer,albumName,albumPic,alia, audio, time, size, flac, lyric}
+		R = append(R, Song{id,name,singer,albumName,albumPic,alia, audio, time, size, flac, lyric})
 	}
 
 	// 音频链接
-	var r2 [][]string
 	var wg sync.WaitGroup
-	for k,_ := range result{
+	for k,_ := range R{
 		wg.Add(1)
-		go func(id string) {
+		go func(index int) {
 			defer wg.Done()
-			uu := fmt.Sprintf("http://%s/song/?cid=%s", MiguServer, id)
+			uu := fmt.Sprintf("http://%s/song/?cid=%s", MiguServer, R[index].ID)
 			rr,err := myHttpClient.Get(uu)
 			if err != nil {
 				return
@@ -69,28 +71,16 @@ func MiguAPI(kw string) []Song {
 			if err != nil {
 				return
 			}
-			r2 = append(r2, []string{id, data2.Data.Num320, fmt.Sprintf("%dm%ds", data2.Data.Duration/60,data2.Data.Duration%60), data2.Data.Flac, data2.Data.Lyric})
+			R[index].Audio = data2.Data.Num320
+			R[index].Time = fmt.Sprintf("%dm%ds", data2.Data.Duration/60,data2.Data.Duration%60)
+			R[index].Flac = data2.Data.Flac
+			R[index].Lyric = data2.Data.Lyric
 		}(k)
 	}
 	wg.Wait()
 
-	// 合并结果
-	for i:=0;i<len(r2);i++{
-		t := result[r2[i][0]]
-		t.Audio = r2[i][1]
-		t.Time = r2[i][2]
-		t.Flac = r2[i][3]
-		t.Lyric = r2[i][4]
-		result[r2[i][0]] = t
-	}
-
-	// 返回结果
-	for _,v := range result {
-		R = append(R, v)
-	}
 	return R
 }
-
 
 type MiguSearchInfo struct {
 	Result int `json:"result"`

@@ -13,6 +13,7 @@ import (
 	"github.com/faiface/beep/mp3"
 	"github.com/faiface/beep/speaker"
 	"github.com/patrickmn/go-cache"
+	"log"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -88,14 +89,14 @@ func PlayMusic()  {
 		case link = <-musicCh:
 			r,err := http.Get(link)
 			if err != nil || r.StatusCode != 200 {
-				dialog.ShowInformation("链接失效", "请刷新数据.", W)
+				dialog.ShowInformation("播放失败", "链接失效或版权限制\n"+CurrentMusic.Name+"_"+CurrentMusic.Singer+".mp3", W)
 				break
 			}
 			defer r.Body.Close()
 
 			streamer, musicFormat, err = mp3.Decode(r.Body)		// 原始音频流
 			if err != nil {
-				dialog.ShowInformation("链接失效", "请刷新数据.", W)
+				dialog.ShowInformation("播放失败", "链接失效或版权限制\n"+CurrentMusic.Name+"_"+CurrentMusic.Singer+".mp3", W)
 				break
 			}
 			defer streamer.Close()
@@ -237,7 +238,9 @@ func searchWidget(myApp fyne.App, parent fyne.Window)fyne.CanvasObject  {
 			if x, found := musicCache.Get("网易云"+searchEntry.Text); found {
 				MusicData = x.([]musicAPI.Song)
 			}else{
+				cur := time.Now()
 				t := musicAPI.NeteaseAPI(searchEntry.Text)
+				log.Println("网易云耗时：", time.Since(cur))
 				if len(t) == 1 {
 					dialog.ShowInformation("搜索失败", "网易云API服务器出错.", W)
 					return
@@ -250,7 +253,9 @@ func searchWidget(myApp fyne.App, parent fyne.Window)fyne.CanvasObject  {
 			if x, found := musicCache.Get("咪咕"+searchEntry.Text); found {
 				MusicData = x.([]musicAPI.Song)
 			}else{
+				cur := time.Now()
 				t := musicAPI.MiguAPI(searchEntry.Text)
+				log.Println("咪咕耗时：", time.Since(cur))
 				if len(t) == 1 {
 					dialog.ShowInformation("搜索失败", "咪咕API服务器出错.", W)
 					return

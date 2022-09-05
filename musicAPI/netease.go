@@ -38,12 +38,40 @@ type Song struct {
 	Lyric string		// 歌词
 }
 
+func GetLyric(s []Song) []Song {
+	var wg sync.WaitGroup
+	for i:=0;i<len(s);i++{
+		wg.Add(1)
+		go func(index int) {
+			defer wg.Done()
+			uuu := fmt.Sprintf("http://%s/lyric?id=%s",NeteaseServer,s[index].ID)
+			rrr,err := http.Get(uuu)
+			if err != nil {
+				return
+			}
+			defer rrr.Body.Close()
+			bbb,err := io.ReadAll(rrr.Body)
+			if err != nil {
+				return
+			}
+			var v LyricInfo
+			err = json.Unmarshal(bbb, &v)
+			if err != nil {
+				return
+			}
+			s[index].Lyric = v.Lrc.Lyric
+		}(i)
+	}
+	wg.Wait()
+	return s
+}
+
 func NeteaseAPI(kw string) []Song {
 	if kw == "" {
 		log.Println("kw为空！")
 		return []Song{{ID:"27731362", Name: "服务器错误!!!", Singer: "服务器错误!!!"}}
 	}
-	limit := 100
+	limit := 30
 	var R []Song
 	var result = make(map[string]Song)
 	// 搜索
@@ -51,6 +79,10 @@ func NeteaseAPI(kw string) []Song {
 	r,err := myHttpClient.Get(u)
 	if err != nil {
 		log.Println("myHttpClient.Get:", err)
+		return []Song{{ID:"27731362", Name: "服务器错误!!!", Singer: "服务器错误!!!"}}
+	}
+	if r.StatusCode != 200 {
+		log.Println("r.StatusCode:", r.StatusCode)
 		return []Song{{ID:"27731362", Name: "服务器错误!!!", Singer: "服务器错误!!!"}}
 	}
 	defer r.Body.Close()
@@ -61,6 +93,9 @@ func NeteaseAPI(kw string) []Song {
 	}
 	var searchDate NeteaseSearchInfo
 	err = json.Unmarshal(b, &searchDate)			// 负数解析到int报错，不影响
+	if err != nil {
+		log.Println("json.Unmarshal:", err)
+	}
 
 	var IDS string
 	for _,v := range searchDate.Result.Songs {
@@ -86,8 +121,6 @@ func NeteaseAPI(kw string) []Song {
 	// 获取音频信息
 	if len(IDS) == 0 {
 		log.Println("len(IDS)=0")
-		log.Println("err:", err)
-		log.Println("searchDate:", searchDate)
 		return []Song{{ID:"27731362", Name: "服务器错误!!!", Singer: "服务器错误!!!"}}
 	}
 	uu := fmt.Sprintf("http://%s/song/url?id=%s",NeteaseServer,IDS[:len(IDS)-1])
@@ -105,6 +138,8 @@ func NeteaseAPI(kw string) []Song {
 	var audioInfo NeteaseAudioInfo
 	err = json.Unmarshal(bb, &audioInfo)
 	if err != nil {
+		log.Println(audioInfo)
+		log.Println(string(bb))
 		log.Println("json.Unmarshal:", err)
 		return []Song{{ID:"27731362", Name: "服务器错误!!!", Singer: "服务器错误!!!"}}
 	}
@@ -115,51 +150,19 @@ func NeteaseAPI(kw string) []Song {
 		t.Time = fmt.Sprintf("%dm%ds", vv.Time/1000/60, vv.Time/1000%60)
 		t.Size = fmt.Sprintf("%.1fM", float64(vv.Size)/1024/1024)
 		result[id] = t
-	}
 
-	// 获取歌词，注意map并发安全
-	var r2 [][]string
-	var wg sync.WaitGroup
-	for k,_ := range result {
-		wg.Add(1)
-		go func(ID string) {
-			defer wg.Done()
-			uuu := fmt.Sprintf("http://%s/lyric?id=%s",NeteaseServer,ID)
-			rrr,err := http.Get(uuu)
-			if err != nil {
-				return
-			}
-			defer r.Body.Close()
-			bbb,err := io.ReadAll(rrr.Body)
-			if err != nil {
-				return
-			}
-			var v LyricInfo
-			err = json.Unmarshal(bbb, &v)
-			if err != nil {
-				return
-			}
-			r2 = append(r2, []string{ID, v.Lrc.Lyric})
-		}(k)
-	}
-	wg.Wait()
-	for i:=0;i<len(r2);i++ {
-		t := result[r2[i][0]]
-		t.Lyric = r2[i][1]
-		result[r2[i][0]] = t
-	}
-
-	// 过滤
-	for k,v := range result {
-		if v.Time == "0m30s" || v.Time == "0m0s" {
-			delete(result, k)
+		// 过滤
+		if t.Time == "0m30s" || t.Time == "0m0s" {
+			delete(result, id)
 		}
 	}
 
-	// 返回结果
+	// 构造结果
 	for _,v := range result {
 		R = append(R, v)
 	}
+	// 加上歌词R，可选
+	R = GetLyric(R)
 	return R
 }
 
