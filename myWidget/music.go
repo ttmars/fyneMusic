@@ -17,6 +17,7 @@ import (
 	"net/http"
 	"net/url"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -36,6 +37,8 @@ var pauseButton *widget.Button			// 暂停按钮
 var playNext *widget.Button				// 下一首
 
 // 标签
+var lyricLabel *widget.Label			// 歌词栏
+var lyricMap map[string]string
 var playerLabel *widget.Hyperlink
 var speedLabel *widget.Label			// 倍速标签，控制样式
 var progressLabel *widget.Label
@@ -56,7 +59,6 @@ var W fyne.Window
 // RandomPlay 随机播放线程
 func RandomPlay()  {
 	doneCh <- true		// 启动后，随机播放歌曲
-	lyricEntry.Hide()
 	for {
 		select {
 		case <-doneCh:
@@ -64,9 +66,7 @@ func RandomPlay()  {
 			randomNum := rand.Intn(len(MusicData))
 			musicCh <- MusicData[randomNum].Audio
 			CurrentMusic = MusicData[randomNum]
-			lyricEntry.SetText(MusicData[randomNum].Lyric)
-			lyricEntry.Refresh()
-			playerLabel.SetText("随机播放：" + MusicData[randomNum].Name + "_" + MusicData[randomNum].Singer + ".mp3")
+			playerLabel.SetText(MusicData[randomNum].Name + "_" + MusicData[randomNum].Singer + ".mp3")
 			playerLabel.Refresh()
 			if pauseButton != nil {
 				pauseButton.SetIcon(theme.MediaPauseIcon())
@@ -108,8 +108,35 @@ func PlayMusic()  {
 			speaker.Play(beep.Seq(ctrl, beep.Callback(func() {
 				doneCh <- true
 			})))
+			lyricLabel.SetText("")
+			lyricLabel.Refresh()
+			lyricMap = parseLyric(CurrentMusic.Lyric)
 		}
 	}
+}
+
+// 解析歌词
+func parseLyric(s string) map[string]string {
+	m := make(map[string]string)
+	t := strings.Split(s, "\n")
+	for _,v := range t {
+		if len(v) > 10{
+			v1 := v[1:6]
+			v2 := v[10:]
+			if v2[0] == ']' {
+				v2 = v2[1:]
+			}
+			m[v1] = v2
+		}
+	}
+	if CurrentMusic.AlbumName != "" {
+		m["00:01"] = CurrentMusic.AlbumName
+	}else if CurrentMusic.Singer != ""{
+		m["00:01"] = CurrentMusic.Singer
+	}else {
+		m["00:01"] = CurrentMusic.Name
+	}
+	return m
 }
 
 func UpdateProgressLabel()  {
@@ -117,6 +144,12 @@ func UpdateProgressLabel()  {
 		select {
 		case <-time.After(time.Second):
 			cur := musicFormat.SampleRate.D(streamer.Position()).Round(time.Second)
+			keyTime := fmt.Sprintf("%02d:%02d", int(cur.Seconds())/60, int(cur.Seconds())%60)
+			if lyric,ok := lyricMap[keyTime];ok{
+				lyricLabel.SetText(lyric)
+			}
+			lyricLabel.Refresh()
+
 			total := CurrentMusic.Time
 			v := fmt.Sprintf("%s/%s",cur,total)
 			progressLabel.SetText(v)
@@ -140,11 +173,11 @@ func createPlayer(myApp fyne.App, parent fyne.Window) fyne.CanvasObject {
 	})
 	playerLabel = widget.NewHyperlink("hello", nil)
 	playerLabel.OnTapped = func() {
-		if lyricEntry.Visible() {
-			lyricEntry.Hide()
+		if lyricLabel.Visible() {
+			lyricLabel.Hide()
 		}else{
-			lyricEntry.Show()
-			lyricEntry.Refresh()
+			lyricLabel.Show()
+			lyricLabel.Refresh()
 		}
 	}
 
@@ -169,10 +202,11 @@ func createPlayer(myApp fyne.App, parent fyne.Window) fyne.CanvasObject {
 			}
 		}
 	})
-	sp := container.NewBorder(nil, nil, speedLabel, nil, speedSlider)
-	sp = container.NewBorder(nil, nil, progressLabel, nil, sp)
+	lyricLabel = widget.NewLabel("")
+	lyricContainer := container.NewCenter(lyricLabel)
+	sp := container.NewBorder(nil,nil,speedLabel,progressLabel,speedSlider)
 	player := container.NewHBox(pauseButton, playNext)
-	player = container.NewBorder(nil, sp, playerLabel, player)
+	player = container.NewBorder(nil, sp, playerLabel, player,lyricContainer)
 	return player
 }
 
@@ -279,11 +313,9 @@ func createOneMusic(song musicAPI.Song, myApp fyne.App, parent fyne.Window) fyne
 		playButton.Disable()
 		defer playButton.Enable()
 		CurrentMusic = song
-		lyricEntry.SetText(song.Lyric)
-		lyricEntry.Refresh()
 		pauseButton.SetIcon(theme.MediaPauseIcon())
 		pauseButton.SetText("暂停")
-		playerLabel.SetText("当前点播：" + song.Name + "_" + song.Singer + ".mp3")
+		playerLabel.SetText(song.Name + "_" + song.Singer + ".mp3")
 		playerLabel.Refresh()
 		speedLabel.SetText("1.0倍速")
 		speedSlider.SetValue(1)
@@ -350,7 +382,10 @@ func createMusicList(myApp fyne.App, parent fyne.Window) fyne.CanvasObject {
 
 // CreateImage 创建一个图片
 func CreateImage(pic string) *canvas.Image {
-	r,_ := http.Get(pic)
+	r,err := http.Get(pic)
+	if err != nil {
+		return canvas.NewImageFromResource(theme.FyneLogo())
+	}
 	defer r.Body.Close()
 	image := canvas.NewImageFromReader(r.Body, "jpg")
 	//image.FillMode = canvas.ImageFillOriginal

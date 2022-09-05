@@ -6,7 +6,6 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-var lyricEntry = widget.NewMultiLineEntry()
 const preferenceCurrentTutorial = "currentTutorial"
 var content = container.NewMax()
 
@@ -62,7 +61,7 @@ func MakeNav(myApp fyne.App, myWindow fyne.Window) fyne.CanvasObject {
 
 	tutorial := container.NewBorder(container.NewVBox(widget.NewSeparator()), nil, nil, nil, content)
 	split := container.NewHSplit(makeNav(setTutorial, true), tutorial)
-	split.Offset = 0.2		// 调整分割线：0~1
+	split.Offset = 0		// 调整分割线：0~1
 	return  split
 }
 
@@ -117,5 +116,5 @@ func makeNav(setTutorial func(tutorial Screen), loadPrevious bool) fyne.CanvasOb
 	//var ImageWall *canvas.Image = canvas.NewImageFromFile("D:\\project\\goProject\\fyneMusic\\myTheme\\wall.jpg")
 	//return container.NewBorder(tree, nil, nil, nil, ImageWall)
 	//return container.NewBorder(nil, nil, nil, nil, tree)
-	return container.NewBorder(tree, nil, nil, nil, lyricEntry)
+	return container.NewBorder(tree, nil, nil, nil)
 }
