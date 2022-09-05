@@ -42,6 +42,7 @@ func main()  {
 // 初始化Preferences变量
 func initPreferences(a fyne.App, w fyne.Window)  {
 	myWidget.W = w
+	myWidget.A = a
 	if !tool.IsDir(a.Preferences().String("savePath")) {
 		a.Preferences().SetString("savePath", myWidget.BasePath)
 	}

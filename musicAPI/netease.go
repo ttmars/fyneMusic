@@ -12,17 +12,9 @@ import (
 	"time"
 )
 
-// 通过Vercel部署，无需服务器！！！
-// https://github.com/Binaryify/NeteaseCloudMusicApi
-// https://vercel.com/ttmars/netease-cloud-music-api
-//var NeteaseServer = "netease-cloud-music-api-orcin-beta.vercel.app"
-//var NeteaseServer = "neteaseapi.youthsweet.com"
-
-// 本地虚拟机docker部署
-//var NeteaseServer = "192.168.66.102:3000"
-
 var NeteaseServer string
 var myHttpClient = &http.Client{Timeout: time.Second*10}
+var LyricCh = make(chan bool, 1)		// 控制异步请求歌词
 
 type Song struct {
 	ID string			// ID
@@ -38,7 +30,32 @@ type Song struct {
 	Lyric string		// 歌词
 }
 
-func GetLyric(s []Song) []Song {
+// GetLyricByID 获取单个歌词
+func GetLyricByID(id string) string {
+	uuu := fmt.Sprintf("http://%s/lyric?id=%s",NeteaseServer,id)
+	rrr,err := http.Get(uuu)
+	if err != nil {
+		log.Println("歌词获取失败：", err)
+		return ""
+	}
+	defer rrr.Body.Close()
+	bbb,err := io.ReadAll(rrr.Body)
+	if err != nil {
+		log.Println("歌词获取失败：", err)
+		return ""
+	}
+	var v LyricInfo
+	err = json.Unmarshal(bbb, &v)
+	if err != nil {
+		log.Println("歌词获取失败：", err)
+		return ""
+	}
+	return v.Lrc.Lyric
+}
+
+// GetLyricAll 并发获取歌词,容易触发风控，不采用
+func GetLyricAll(s []Song) ([]Song,map[string]string) {
+	var IDLyric = make(map[string]string)
 	var wg sync.WaitGroup
 	for i:=0;i<len(s);i++{
 		wg.Add(1)
@@ -63,7 +80,10 @@ func GetLyric(s []Song) []Song {
 		}(i)
 	}
 	wg.Wait()
-	return s
+	for _,v := range s {
+		IDLyric[v.ID] = v.Lyric
+	}
+	return s,IDLyric
 }
 
 func NeteaseAPI(kw string) []Song {
@@ -161,8 +181,6 @@ func NeteaseAPI(kw string) []Song {
 	for _,v := range result {
 		R = append(R, v)
 	}
-	// 加上歌词R，可选
-	R = GetLyric(R)
 	return R
 }
 
