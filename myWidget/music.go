@@ -112,6 +112,7 @@ func PlayMusic()  {
 			})))
 			lyricLabel.SetText("")
 			lyricLabel.Refresh()
+			lyricMap = make(map[string]string)
 			if CurrentMusic.Lyric == "" {
 				go func() {
 					start := time.Now()
