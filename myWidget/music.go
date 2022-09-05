@@ -162,11 +162,11 @@ func parseLyric(s string) map[string]string {
 		}
 	}
 	if CurrentMusic.AlbumName != "" {
-		m["00:01"] = CurrentMusic.AlbumName
+		m["00:03"] = CurrentMusic.AlbumName
 	}else if CurrentMusic.Singer != ""{
-		m["00:01"] = CurrentMusic.Singer
+		m["00:03"] = CurrentMusic.Singer
 	}else {
-		m["00:01"] = CurrentMusic.Name
+		m["00:03"] = CurrentMusic.Name
 	}
 	return m
 }
