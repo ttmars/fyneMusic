@@ -8,7 +8,12 @@ import (
 	"fyneMusic/myTheme"
 	"fyneMusic/myWidget"
 	"fyneMusic/tool"
+	"log"
 )
+
+func init()  {
+	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
+}
 
 func main()  {
 	myApp := app.NewWithID("hello,world!")				// 创建APP
@@ -32,10 +37,11 @@ func main()  {
 	myWindow.SetMainMenu(myWidget.MakeMyMenu(myApp, myWindow))		// 创建菜单
 	myWindow.SetContent(myWidget.MakeNav(myApp, myWindow))			// 创建导航
 
-	go myWidget.RandomPlay()				// 随机播放线程
-	go myWidget.PlayMusic()					// 播放线程
-	go myWidget.UpdateProgressLabel()		// 播放时间更新线程
-	go myWidget.InitData()					// 异步初始化数据
+	go myWidget.MyPlayer.RandomPlay()				// 随机播放线程
+	go myWidget.MyPlayer.PlayMusic()				// 播放线程
+	go myWidget.MyPlayer.UpdateProgressLabel()		// 播放时间更新线程
+	go myWidget.MyPlayer.InitPlayList()				// 异步初始化数据
+	go myWidget.MyPlayer.UpdatePlaylist()			// 定时刷新数据
 
 	myWindow.ShowAndRun()			// 事件循环
 }
