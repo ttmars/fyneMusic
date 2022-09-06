@@ -46,7 +46,8 @@ func MiguAPI(kw string) []Song {
 		albumName := v.Album.Name
 		albumPic := v.Album.PicURL
 		audio := v.URL
-		var alia, time, size, flac, lyric string
+		var alia, size, flac, lyric string
+		var time int
 		R = append(R, Song{id,name,singer,albumName,albumPic,alia, audio, time, size, flac, lyric})
 	}
 
@@ -72,7 +73,8 @@ func MiguAPI(kw string) []Song {
 				return
 			}
 			R[index].Audio = data2.Data.Num320
-			R[index].Time = fmt.Sprintf("%dm%ds", data2.Data.Duration/60,data2.Data.Duration%60)
+			//R[index].Time = fmt.Sprintf("%dm%ds", data2.Data.Duration/60,data2.Data.Duration%60)
+			R[index].Time = data2.Data.Duration
 			R[index].Flac = data2.Data.Flac
 			R[index].Lyric = data2.Data.Lyric
 		}(k)

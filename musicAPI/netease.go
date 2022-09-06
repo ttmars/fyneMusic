@@ -22,7 +22,7 @@ type Song struct {
 	AlbumPic string		// 专辑图片链接
 	Alia string			// 主题曲、插曲
 	Audio string		// 音频链接
-	Time string			// 时长
+	Time int			// 时长
 	Size string			// 大小
 	Flac string			// flac格式链接，仅咪咕音乐
 	Lyric string		// 歌词
@@ -98,7 +98,8 @@ func NeteaseAPI(kw string) []Song {
 		if len(v.Alia) > 0 {
 			alia = v.Alia[0]
 		}
-		var audio,time,size,flac,lyric string
+		var audio,size,flac,lyric string
+		var time int
 		IDS += id + ","
 		result[id] = Song{id,name,singer,albumName,albumPic,alia, audio, time, size, flac, lyric}
 	}
@@ -132,12 +133,13 @@ func NeteaseAPI(kw string) []Song {
 		id := fmt.Sprintf("%d", vv.ID)
 		t := result[id]
 		t.Audio = vv.URL
-		t.Time = fmt.Sprintf("%dm%ds", vv.Time/1000/60, vv.Time/1000%60)
+		//t.Time = fmt.Sprintf("%dm%ds", vv.Time/1000/60, vv.Time/1000%60)
+		t.Time = vv.Time/1000
 		t.Size = fmt.Sprintf("%.1fM", float64(vv.Size)/1024/1024)
 		result[id] = t
 
 		// 过滤
-		if t.Time == "0m30s" || t.Time == "0m0s" {
+		if t.Time == 0 || t.Time == 30 {
 			delete(result, id)
 		}
 	}

@@ -13,14 +13,21 @@ import (
 	"github.com/faiface/beep/mp3"
 	"github.com/faiface/beep/speaker"
 	"github.com/patrickmn/go-cache"
+	"io"
 	"log"
+	"math"
 	"math/rand"
 	"net/http"
 	"net/url"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
 )
+
+var progressLeft *widget.Label
+var progressRight *widget.Label
+var line3 *fyne.Container
 
 // 计算当前播放进度
 var streamer beep.StreamSeekCloser
@@ -35,14 +42,14 @@ var playButton *widget.Button			// 播放按钮
 var flacDownloadButton *widget.Button	// 下载按钮
 var downloadButton *widget.Button		// 下载按钮
 var pauseButton *widget.Button			// 暂停按钮
-var playNext *widget.Button				// 下一首
+var playNext *widget.Button				// 下一曲
 
 // 标签
 var lyricLabel *widget.Label			// 歌词栏
 var lyricMap map[string]string
 var playerLabel *widget.Hyperlink
-var speedLabel *widget.Label			// 倍速标签，控制样式
-var progressLabel *widget.Label
+var speedLabel *widget.Hyperlink			// 倍速标签，控制样式
+var progressSlider *widget.Slider
 var speedSlider *widget.Slider			// 倍速滑动条，控制样式
 var labelLength = 15					// 歌曲名称长度
 var MusicData []musicAPI.Song			// 歌曲信息
@@ -72,10 +79,10 @@ func RandomPlay()  {
 			playerLabel.Refresh()
 			if pauseButton != nil {
 				pauseButton.SetIcon(theme.MediaPauseIcon())
-				pauseButton.SetText("暂停")
+				pauseButton.SetText("暂  停")
 			}
 			if speedLabel != nil {
-				speedLabel.SetText("1.0倍速")
+				speedLabel.SetText("1.0倍")
 				speedSlider.SetValue(1)
 			}
 		}
@@ -88,14 +95,23 @@ func PlayMusic()  {
 	for {
 		select{
 		case link = <-musicCh:
+			speaker.Clear()
 			r,err := http.Get(link)
 			if err != nil || r.StatusCode != 200 {
 				dialog.ShowInformation("播放失败", "链接失效或版权限制\n"+CurrentMusic.Name+"_"+CurrentMusic.Singer+".mp3", W)
 				break
 			}
 			defer r.Body.Close()
+			// 写入文件
+			b,err := io.ReadAll(r.Body)
+			if err != nil {
+				log.Println("读取失败：", err)
+			}
+			f,_ := os.Create(os.TempDir() + "\\tmp.mp3")
+			f.Write(b)
+			f.Seek(0,0)
 
-			streamer, musicFormat, err = mp3.Decode(r.Body)		// 原始音频流
+			streamer, musicFormat, err = mp3.Decode(f)		// 原始音频流
 			if err != nil {
 				dialog.ShowInformation("播放失败", "链接失效或版权限制\n"+CurrentMusic.Name+"_"+CurrentMusic.Singer+".mp3", W)
 				break
@@ -103,10 +119,9 @@ func PlayMusic()  {
 			defer streamer.Close()
 
 			musicStreamer = beep.ResampleRatio(4, 1, streamer)		// 控制播放速度
-			ctrl = &beep.Ctrl{Streamer: musicStreamer, Paused: false}			// 暂停/播放
+			ctrl = &beep.Ctrl{Streamer: musicStreamer, Paused: false}			// 暂  停/播  放
 
 			_ = speaker.Init(musicFormat.SampleRate, musicFormat.SampleRate.N(time.Second/10))
-			speaker.Clear()
 			speaker.Play(beep.Seq(ctrl, beep.Callback(func() {
 				doneCh <- true
 			})))
@@ -131,18 +146,26 @@ func UpdateProgressLabel()  {
 	for {
 		select {
 		case <-time.After(time.Millisecond * 500):
+			if streamer == nil {
+				break
+			}
+			// 歌词刷新
 			cur := musicFormat.SampleRate.D(streamer.Position()).Round(time.Second)
-
 			keyTime := fmt.Sprintf("%02d:%02d", int(cur.Seconds())/60, int(cur.Seconds())%60)
 			if lyric,ok := lyricMap[keyTime];ok{
 				lyricLabel.SetText(lyric)
 			}
 			lyricLabel.Refresh()
 
-			total := CurrentMusic.Time
-			v := fmt.Sprintf("%s/%s",cur,total)
-			progressLabel.SetText(v)
-			progressLabel.Refresh()
+			// 进度条刷新
+			total := fmt.Sprintf("%02d:%02d", CurrentMusic.Time/60, CurrentMusic.Time%60)
+			progressRight.SetText(total)
+			progressRight.Refresh()
+			progressLeft.SetText(keyTime)
+			progressLeft.Refresh()
+			progressSlider.Max = float64(streamer.Len())
+			progressSlider.SetValue(float64(streamer.Position()))
+			progressSlider.Refresh()
 		}
 	}
 }
@@ -171,20 +194,15 @@ func parseLyric(s string) map[string]string {
 	return m
 }
 
+// MusicMerge 整合部件
+func MusicMerge(myApp fyne.App, parent fyne.Window) fyne.CanvasObject {
+	return container.NewBorder(searchWidget(myApp, parent), createPlayer(), nil, nil, createMusicList(myApp, parent))
+}
+
 // 播放器
 func createPlayer() fyne.CanvasObject {
-	playNext = widget.NewButtonWithIcon("下一首", theme.MediaSkipNextIcon(), func() {
-		playNext.Disable()
-		defer playNext.Enable()
-		pauseButton.SetIcon(theme.MediaPauseIcon())
-		pauseButton.SetText("暂停")
-		if speedLabel != nil {
-			speedLabel.SetText("1.0倍速")
-			speedSlider.SetValue(1)
-		}
-		doneCh <- true
-	})
-	playerLabel = widget.NewHyperlink("hello", nil)
+	// 第一行
+	playerLabel = widget.NewHyperlink("mp3", nil)
 	playerLabel.OnTapped = func() {
 		if lyricLabel.Visible() {
 			lyricLabel.Hide()
@@ -193,39 +211,79 @@ func createPlayer() fyne.CanvasObject {
 			lyricLabel.Refresh()
 		}
 	}
+	lyricLabel = widget.NewLabel("")
+	lyricContainer := container.NewCenter(lyricLabel)
+	pauseButton = widget.NewButtonWithIcon("暂  停", theme.MediaPauseIcon(), func() {
+		if ctrl != nil {
+			ctrl.Paused = !ctrl.Paused
+			if ctrl.Paused {
+				pauseButton.SetIcon(theme.MediaPlayIcon())
+				pauseButton.SetText("播  放")
+			}else{
+				pauseButton.SetIcon(theme.MediaPauseIcon())
+				pauseButton.SetText("暂  停")
+			}
+		}
+	})
+	line1 := container.NewBorder(nil,nil,playerLabel,pauseButton, lyricContainer)
 
+	// 第二行
+	speedLabel = widget.NewHyperlink("1.0倍", nil)
+	speedLabel.OnTapped = func() {
+		if line3.Visible() {
+			line3.Hide()
+		}else{
+			line3.Show()
+			line3.Refresh()
+		}
+	}
+	progressLeft = widget.NewLabel("00:00")
+	progressSlider = widget.NewSlider(0,10)
+	progressSlider.SetValue(0)
+	progressSlider.Step = 1
+	progressSlider.OnChanged = func(f float64) {
+		if streamer != nil {
+			t := math.Abs(float64(streamer.Position())-f)
+			if  t > 200000 {
+				ctrl.Paused = true
+				streamer.Seek(int(f))
+				ctrl.Paused = false
+			}
+		}
+	}
+	progressRight = widget.NewLabel("00:00")
+	playNext = widget.NewButtonWithIcon("下一曲", theme.MediaSkipNextIcon(), func() {
+		playNext.Disable()
+		defer playNext.Enable()
+		pauseButton.SetIcon(theme.MediaPauseIcon())
+		pauseButton.SetText("暂  停")
+		if speedLabel != nil {
+			speedLabel.SetText("1.0倍")
+			speedSlider.SetValue(1)
+		}
+		doneCh <- true
+	})
+	line2 := container.NewBorder(nil,nil,progressLeft,progressRight,progressSlider)
+	line2 = container.NewBorder(nil,nil,speedLabel,nil, line2)
+	line2 = container.NewBorder(nil,nil,nil,playNext,line2)
+
+	// 第三行
+	speedSliderLeftLabel := widget.NewLabel("1.0倍")
+	speedSliderRightLabel := widget.NewLabel("1.5倍")
 	speedSlider = widget.NewSlider(0.5,1.5)
 	speedSlider.SetValue(1)
 	speedSlider.Step = 0.1
 	speedSlider.OnChanged = func(f float64) {
 		musicStreamer.SetRatio(f)
-		speedLabel.SetText(fmt.Sprintf("%.1f倍速", f))
+		speedLabel.SetText(fmt.Sprintf("%.1f倍", f))
+		speedSliderLeftLabel.SetText(fmt.Sprintf("%.1f", f))
 	}
-	speedLabel = widget.NewLabel("1.0倍速")
-	progressLabel = widget.NewLabel("0/0")
-	pauseButton = widget.NewButtonWithIcon("暂停", theme.MediaPauseIcon(), func() {
-		if ctrl != nil {
-			ctrl.Paused = !ctrl.Paused
-			if ctrl.Paused {
-				pauseButton.SetIcon(theme.MediaPlayIcon())
-				pauseButton.SetText("播放")
-			}else{
-				pauseButton.SetIcon(theme.MediaPauseIcon())
-				pauseButton.SetText("暂停")
-			}
-		}
-	})
-	lyricLabel = widget.NewLabel("")
-	lyricContainer := container.NewCenter(lyricLabel)
-	sp := container.NewBorder(nil,nil,speedLabel,progressLabel,speedSlider)
-	player := container.NewHBox(pauseButton, playNext)
-	player = container.NewBorder(nil, sp, playerLabel, player,lyricContainer)
-	return player
-}
+	line3 = container.NewBorder(nil,nil,speedSliderLeftLabel,speedSliderRightLabel,speedSlider)
+	line3.Hide()
 
-// MusicMerge 整合部件
-func MusicMerge(myApp fyne.App, parent fyne.Window) fyne.CanvasObject {
-	return container.NewBorder(searchWidget(myApp, parent), createPlayer(), nil, nil, createMusicList(myApp, parent))
+	player := container.NewVBox(line1, line2)
+	player = container.NewBorder(nil,line3,nil,nil,player)
+	return player
 }
 
 // 搜索组件
@@ -250,7 +308,7 @@ func searchWidget(myApp fyne.App, parent fyne.Window)fyne.CanvasObject  {
 			}else{
 				cur := time.Now()
 				t := musicAPI.NeteaseAPI(searchEntry.Text)
-				log.Println("网易云耗时：", time.Since(cur))
+				log.Println("网易云请求耗时：", time.Since(cur))
 				if len(t) == 1 {
 					dialog.ShowInformation("搜索失败", "网易云API服务器出错.", W)
 					return
@@ -329,10 +387,10 @@ func createOneMusic(song musicAPI.Song, myApp fyne.App, parent fyne.Window) fyne
 		defer playButton.Enable()
 		CurrentMusic = song
 		pauseButton.SetIcon(theme.MediaPauseIcon())
-		pauseButton.SetText("暂停")
+		pauseButton.SetText("暂  停")
 		playerLabel.SetText(song.Name + "_" + song.Singer + ".mp3")
 		playerLabel.Refresh()
-		speedLabel.SetText("1.0倍速")
+		speedLabel.SetText("1.0倍")
 		speedSlider.SetValue(1)
 		musicCh <- song.Audio
 	})
@@ -370,7 +428,7 @@ func createOneMusic(song musicAPI.Song, myApp fyne.App, parent fyne.Window) fyne
 }
 
 // 歌曲列表组件
-func createMusicList(myApp fyne.App, parent fyne.Window) fyne.CanvasObject {
+func createMusicList(myApp fyne.App, parent fyne.Window) *container.Scroll {
 	MusicDataContainer = make([]fyne.CanvasObject,0,30)		// 固定30
 	MusicData = musicAPI.MiguAPI("周杰伦")
 	//MusicData = musicAPI.NeteaseAPI("王力宏")
