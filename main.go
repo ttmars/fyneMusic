@@ -35,6 +35,7 @@ func main()  {
 	go myWidget.RandomPlay()				// 随机播放线程
 	go myWidget.PlayMusic()					// 播放线程
 	go myWidget.UpdateProgressLabel()		// 播放时间更新线程
+	go myWidget.InitData()					// 异步初始化数据
 
 	myWindow.ShowAndRun()			// 事件循环
 }

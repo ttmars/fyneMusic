@@ -6,6 +6,7 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 	"fyneMusic/musicAPI"
@@ -67,7 +68,6 @@ var W fyne.Window
 var A fyne.App
 // RandomPlay 随机播放线程
 func RandomPlay()  {
-	doneCh <- true		// 启动后，随机播放歌曲
 	for {
 		select {
 		case <-doneCh:
@@ -202,7 +202,7 @@ func MusicMerge(myApp fyne.App, parent fyne.Window) fyne.CanvasObject {
 // 播放器
 func createPlayer() fyne.CanvasObject {
 	// 第一行
-	playerLabel = widget.NewHyperlink("mp3", nil)
+	playerLabel = widget.NewHyperlink("", nil)
 	playerLabel.OnTapped = func() {
 		if lyricLabel.Visible() {
 			lyricLabel.Hide()
@@ -291,8 +291,8 @@ func searchWidget(myApp fyne.App, parent fyne.Window)fyne.CanvasObject  {
 	searchEntry := widget.NewEntry()
 	searchEntry.SetPlaceHolder("遇见萤火")
 
-	searchEngine := widget.NewSelectEntry([]string{"咪咕", "网易云"})
-	searchEngine.SetText("咪咕")
+	searchEngine := widget.NewSelectEntry([]string{"网易云", "咪咕"})
+	searchEngine.SetText("网易云")
 
 	searchSubmit = widget.NewButtonWithIcon("搜索",theme.SearchIcon(), func() {
 		if searchEntry.Text == "" {
@@ -430,12 +430,10 @@ func createOneMusic(song musicAPI.Song, myApp fyne.App, parent fyne.Window) fyne
 // 歌曲列表组件
 func createMusicList(myApp fyne.App, parent fyne.Window) *container.Scroll {
 	MusicDataContainer = make([]fyne.CanvasObject,0,30)		// 固定30
-	MusicData = musicAPI.MiguAPI("周杰伦")
-	//MusicData = musicAPI.NeteaseAPI("王力宏")
 	length := len(MusicData)
 	if length == 0 {
 		for i:=0;i<30;i++{
-			MusicDataContainer = append(MusicDataContainer, widget.NewSeparator())
+			MusicDataContainer = append(MusicDataContainer, layout.NewSpacer())
 		}
 	} else if length < 30 {
 		for _,song := range MusicData {
@@ -464,4 +462,18 @@ func CreateImage(pic string) *canvas.Image {
 	image := canvas.NewImageFromReader(r.Body, "jpg")
 	//image.FillMode = canvas.ImageFillOriginal
 	return image
+}
+
+// InitData 初始化数据
+func InitData()  {
+	//MusicData = musicAPI.MiguAPI("周杰伦")
+	MusicData = musicAPI.NeteaseAPI("抖音")
+	for i,song := range MusicData {
+		if i < len(MusicDataContainer) {
+			MusicDataContainer[i] = createOneMusic(song, A, W)
+			MusicDataContainer[i].Refresh()
+		}
+	}
+
+	doneCh <- true		// 启动后自动播放
 }
