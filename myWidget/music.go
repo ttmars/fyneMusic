@@ -82,7 +82,8 @@ var MusicDataContainer []fyne.CanvasObject				// 装载歌曲信息的容器
 // InitPlayList 异步初始化
 func (p *Player)InitPlayList()  {
 	p.PlayList = musicAPI.MiguAPI("周杰伦")
-	//p.PlayList = musicAPI.NeteaseAPI("抖音")
+	p.KeyWord = "周杰伦"
+	p.SearchAPI = "咪咕"
 	for i,song := range p.PlayList {
 		if i < len(MusicDataContainer) {
 			MusicDataContainer[i] = createOneMusic(song, A, W)
@@ -112,7 +113,9 @@ func (p *Player)PlayMusic()  {
 			speaker.Clear()
 			r,err := http.Get(song.Audio)
 			if err != nil || r.StatusCode != 200 {
-				dialog.ShowInformation("播放失败", "版权限制\n"+p.CurrentSong.Name+"_"+p.CurrentSong.Singer+".mp3", W)
+				//dialog.ShowInformation("播放失败", "版权限制\n"+p.CurrentSong.Name+"_"+p.CurrentSong.Singer+".mp3", W)
+				log.Println("自动刷新数据!", p.SearchAPI, p.KeyWord)
+				go searchFunc(p.SearchAPI, p.KeyWord)
 				break
 			}
 			defer r.Body.Close()
@@ -195,17 +198,6 @@ func (p *Player)UpdateProgressLabel()  {
 			progressSlider.Max = float64(streamer.Len())
 			progressSlider.SetValue(float64(streamer.Position()))
 			progressSlider.Refresh()
-		}
-	}
-}
-
-// UpdatePlaylist 定时刷新数据
-func (p *Player)UpdatePlaylist()  {
-	for {
-		select {
-		case <-time.After(time.Minute * 20):
-			log.Println("自动刷新数据！")
-			searchFunc(p.SearchAPI, p.KeyWord)
 		}
 	}
 }
@@ -357,6 +349,7 @@ func searchWidget()fyne.CanvasObject  {
 }
 
 func searchFunc(eg, kw string)  {
+	log.Println("搜索：", eg, kw)
 	if kw == "" {
 		return
 	}

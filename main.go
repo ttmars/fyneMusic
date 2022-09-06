@@ -41,7 +41,6 @@ func main()  {
 	go myWidget.MyPlayer.PlayMusic()				// 播放线程
 	go myWidget.MyPlayer.UpdateProgressLabel()		// 播放时间更新线程
 	go myWidget.MyPlayer.InitPlayList()				// 异步初始化数据
-	go myWidget.MyPlayer.UpdatePlaylist()			// 定时刷新数据
 
 	myWindow.ShowAndRun()			// 事件循环
 }
