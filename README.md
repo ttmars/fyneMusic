@@ -30,7 +30,7 @@ git clone https://github.com/ttmars/fyneMusic.git
 go mod tidy
 go run main.go
 ```
-
+4. 或直接下载：[https://github.com/ttmars/fyneMusic/releases](https://github.com/ttmars/fyneMusic/releases)
 ### 效果图
 
 ![image](https://raw.githubusercontent.com/ttmars/image/06d0d3f72f0bda46c8584687546830bbaa3e79f6/github/fyne.png)
