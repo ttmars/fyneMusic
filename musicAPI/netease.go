@@ -83,6 +83,7 @@ func NeteaseAPI(kw string) []Song {
 	}
 
 	var IDS string
+	var IDSlice []string
 	for _,v := range searchDate.Result.Songs {
 		id := fmt.Sprintf("%d", v.ID)
 		name := v.Name
@@ -101,6 +102,7 @@ func NeteaseAPI(kw string) []Song {
 		var audio,size,flac,lyric string
 		var time int
 		IDS += id + ","
+		IDSlice = append(IDSlice, id)
 		result[id] = Song{id,name,singer,albumName,albumPic,alia, audio, time, size, flac, lyric}
 	}
 
@@ -145,8 +147,10 @@ func NeteaseAPI(kw string) []Song {
 	}
 
 	// 构造结果
-	for _,v := range result {
-		R = append(R, v)
+	for _,id := range IDSlice {
+		if v,ok := result[id]; ok {
+			R = append(R, v)
+		}
 	}
 	return R
 }
