@@ -81,9 +81,9 @@ var MusicDataContainer []fyne.CanvasObject				// 装载歌曲信息的容器
 
 // InitPlayList 异步初始化
 func (p *Player)InitPlayList()  {
-	p.PlayList = musicAPI.MiguAPI("周杰伦")
-	p.KeyWord = "周杰伦"
-	p.SearchAPI = "咪咕"
+	p.PlayList = musicAPI.NeteaseAPI("纯音乐")
+	p.KeyWord = "纯音乐"
+	p.SearchAPI = "网易云"
 	for i,song := range p.PlayList {
 		if i < len(MusicDataContainer) {
 			MusicDataContainer[i] = createOneMusic(song, A, W)
@@ -302,7 +302,7 @@ func createPlayer() fyne.CanvasObject {
 		MyPlayer.Speed = f
 		musicStreamer.SetRatio(f)
 		speedLabel.SetText(fmt.Sprintf("%.1f倍速", f))
-		speedSliderLeftLabel.SetText(fmt.Sprintf("%.1f", f))
+		//speedSliderLeftLabel.SetText(fmt.Sprintf("%.1f", f))
 	}
 	line3 = container.NewBorder(nil,nil,speedSliderLeftLabel,speedSliderRightLabel,speedSlider)
 	line3.Hide()
