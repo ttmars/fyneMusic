@@ -56,7 +56,7 @@ func initPreferences(a fyne.App, w fyne.Window)  {
 		a.Preferences().SetString("miguServer", "39.101.203.25:3400")
 	}
 	if a.Preferences().String("neteaseServer") == "" {
-		a.Preferences().SetString("neteaseServer", "neteaseapi.youthsweet.com")
+		a.Preferences().SetString("neteaseServer", "43.138.26.158:3000")
 	}
 	musicAPI.MiguServer = a.Preferences().String("miguServer")
 	musicAPI.NeteaseServer = a.Preferences().String("neteaseServer")
