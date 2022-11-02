@@ -1,10 +1,19 @@
 package myWidget
 
 import (
+	"bytes"
+	"embed"
+	"fmt"
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
+	"fyneMusic/tool"
+	"strconv"
 )
+
+//go:embed wall
+var f embed.FS
 
 const preferenceCurrentTutorial = "currentTutorial"
 var content = container.NewMax()
@@ -113,8 +122,18 @@ func makeNav(setTutorial func(tutorial Screen), loadPrevious bool) fyne.CanvasOb
 	//	}),
 	//)
 
-	//var ImageWall *canvas.Image = canvas.NewImageFromFile("D:\\project\\goProject\\fyneMusic\\myTheme\\wall.jpg")
+	// 未嵌入静态资源
+	//wallPath := fmt.Sprintf("./myWidget/wall/" + strconv.Itoa(tool.GetRandomNM(1,5)) + ".png")
+	//var ImageWall *canvas.Image = canvas.NewImageFromFile(wallPath)
 	//return container.NewBorder(tree, nil, nil, nil, ImageWall)
-	//return container.NewBorder(nil, nil, nil, nil, tree)
-	return container.NewBorder(tree, nil, nil, nil)
+
+	// 方式一：通过embed方式嵌入静态资源
+	name := fmt.Sprintf("wall/" + strconv.Itoa(tool.GetRandomNM(1,5)) + ".png")
+	b,_ := f.ReadFile(name)
+	var ImageWall *canvas.Image = canvas.NewImageFromReader(bytes.NewReader(b), name)
+	return container.NewBorder(tree, nil, nil, nil, ImageWall)
+
+	// 方式二：将静态资源转换成.go文件进行引入
+	//var ImageWall *canvas.Image = canvas.NewImageFromResource(myTheme.ResourceLogoJpg)
+	//return container.NewBorder(tree, nil, nil, nil, ImageWall)
 }
