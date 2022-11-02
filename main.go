@@ -16,7 +16,7 @@ func init()  {
 }
 
 func main()  {
-	myApp := app.NewWithID("hello,world!")				// 创建APP
+	myApp := app.NewWithID("go!")				// 创建APP
 	myWindow := myApp.NewWindow("网易云音乐")			// 创建窗口
 	initPreferences(myApp,myWindow)							// 初始化全局变量
 
