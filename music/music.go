@@ -4,6 +4,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/driver/desktop"
 	"fyneMusic/myTheme"
 	"os"
 )
@@ -19,14 +20,14 @@ func RunApp() {
 	Window.Resize(fyne.NewSize(1200,800))			// 设置窗口大小
 	Window.CenterOnScreen()								// 窗口居中显示
 	Window.SetMaster()									// 设置为主窗口
-	//myWindow.SetCloseIntercept(func() {myWindow.Hide()})	// 设置窗口托盘显示
-	//if desk, ok := myApp.(desktop.App); ok {
-	//	m := fyne.NewMenu("MyApp",
-	//		fyne.NewMenuItem("Show", func() {
-	//			myWindow.Show()
-	//		}))
-	//	desk.SetSystemTrayMenu(m)
-	//}
+	Window.SetCloseIntercept(func() {Window.Hide()})	// 设置窗口托盘显示
+	if desk, ok := App.(desktop.App); ok {
+		m := fyne.NewMenu("MyApp",
+			fyne.NewMenuItem("Show", func() {
+				Window.Show()
+			}))
+		desk.SetSystemTrayMenu(m)
+	}
 
 	initPreferences()
 	Window.SetMainMenu(MakeMyMenu(App, Window))
