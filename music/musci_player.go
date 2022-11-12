@@ -13,16 +13,19 @@ var mp MusicPlayer
 type MusicPlayer struct {
 	PlayerLabel *widget.Hyperlink
 	PlayerLyric *widget.Label
-	PlayerPause *widget.Button
-	PlayerSpeedLabel *widget.Hyperlink
 	PlayerStartTime *widget.Label
 	PlayerProgress *widget.Slider
 	PlayerEndTime *widget.Label
-	PlayerNext *widget.Button
+	PlayerPause *widget.Button		// 播放、暂停
+	PlayerNext *widget.Button		// 下一曲
+	PlayerPrev *widget.Button		// 上一曲
+	PlayerMode *widget.Hyperlink		// 播放模式
+	PlayerSpeedLabel *widget.Hyperlink	// 播放速度
 	PlayerSpeedLeft *widget.Label
 	PlayerSpeedSlider *widget.Slider
 	PlayerSpeedRight *widget.Label
 }
+var line3 *fyne.Container
 
 func MakeMusicPlayer()(c fyne.CanvasObject)  {
 	// 第一行
@@ -36,15 +39,15 @@ func MakeMusicPlayer()(c fyne.CanvasObject)  {
 		}
 	}
 	mp.PlayerLyric = widget.NewLabel("")
-	mp.PlayerPause = widget.NewButtonWithIcon("暂  停", theme.MediaPauseIcon(), func() {
+	mp.PlayerPause = widget.NewButtonWithIcon("", theme.MediaPauseIcon(), func() {
 		if ctrl != nil {
 			ctrl.Paused = !ctrl.Paused
 			if ctrl.Paused {
 				mp.PlayerPause.SetIcon(theme.MediaPlayIcon())
-				mp.PlayerPause.SetText("播  放")
+				mp.PlayerPause.SetText("")
 			}else{
 				mp.PlayerPause.SetIcon(theme.MediaPauseIcon())
-				mp.PlayerPause.SetText("暂  停")
+				mp.PlayerPause.SetText("")
 			}
 		}
 	})
@@ -74,11 +77,32 @@ func MakeMusicPlayer()(c fyne.CanvasObject)  {
 		}
 	}
 	mp.PlayerEndTime = widget.NewLabel("00:00")
-	mp.PlayerNext = widget.NewButtonWithIcon("下一曲", theme.MediaSkipNextIcon(), func() {
+	mp.PlayerNext = widget.NewButtonWithIcon("", theme.MediaSkipNextIcon(), func() {
 		mp.PlayerNext.Disable()
 		defer mp.PlayerNext.Enable()
-		MyPlayer.DoneChan <- true
+		MyPlayer.CurrentSongIndex +=1
+		ml.Select(MyPlayer.CurrentSongIndex)
 	})
+	mp.PlayerPrev = widget.NewButtonWithIcon("", theme.MediaSkipPreviousIcon(), func() {
+		mp.PlayerNext.Disable()
+		defer mp.PlayerNext.Enable()
+		MyPlayer.CurrentSongIndex -=1
+		ml.Select(MyPlayer.CurrentSongIndex)
+	})
+	mp.PlayerMode = widget.NewHyperlink("顺序播放", nil)
+	mp.PlayerMode.OnTapped = func() {
+		if MyPlayer.PlayMode == 1 {
+			MyPlayer.PlayMode = 2
+			mp.PlayerMode.SetText("随机播放")
+		}else if MyPlayer.PlayMode == 2 {
+			MyPlayer.PlayMode = 3
+			mp.PlayerMode.SetText("单曲循环")
+		}else{
+			MyPlayer.PlayMode = 1
+			mp.PlayerMode.SetText("顺序播放")
+		}
+	}
+
 
 	// 第三行
 	mp.PlayerSpeedLeft = widget.NewLabel("0.5")
@@ -94,14 +118,25 @@ func MakeMusicPlayer()(c fyne.CanvasObject)  {
 	}
 
 
-	line1 := container.NewBorder(nil,nil,mp.PlayerLabel,mp.PlayerPause, container.NewCenter(mp.PlayerLyric))
-	line2 := container.NewBorder(nil,nil,mp.PlayerStartTime,mp.PlayerEndTime,mp.PlayerProgress)
-	line2 = container.NewBorder(nil,nil,mp.PlayerSpeedLabel,mp.PlayerNext, line2)
+	//line1 := container.NewBorder(nil,nil,mp.PlayerLabel,mp.PlayerPause, container.NewCenter(mp.PlayerLyric))
+	//line2 := container.NewBorder(nil,nil,mp.PlayerStartTime,mp.PlayerEndTime,mp.PlayerProgress)
+	//line2 = container.NewBorder(nil,nil,mp.PlayerSpeedLabel,mp.PlayerNext, line2)
+	//line3 = container.NewBorder(nil,nil,mp.PlayerSpeedLeft,mp.PlayerSpeedRight,mp.PlayerSpeedSlider)
+	////line3.Hide()
+	//c = container.NewVBox(line1, line2)
+	//c = container.NewBorder(nil,line3,nil,nil,c)
+	//line1 := container.NewGridWithColumns(3, mp.PlayerPrev, mp.PlayerPause, mp.PlayerNext)
+
+	line1 := container.NewBorder(nil,nil,mp.PlayerSpeedLabel,mp.PlayerMode,container.NewCenter(mp.PlayerLyric))
+
+	t1 := container.NewBorder(nil, nil,mp.PlayerPrev,mp.PlayerNext,mp.PlayerPause)
+	t2 := container.NewBorder(nil,nil,mp.PlayerStartTime, mp.PlayerEndTime, mp.PlayerProgress)
+	line2 := container.NewBorder(nil,nil,nil,t1,t2)
+
 	line3 = container.NewBorder(nil,nil,mp.PlayerSpeedLeft,mp.PlayerSpeedRight,mp.PlayerSpeedSlider)
 	line3.Hide()
 
-	c = container.NewVBox(line1, line2)
-	c = container.NewBorder(nil,line3,nil,nil,c)
+	c = container.NewVBox(line1, line2, line3)
 	return
 }
 

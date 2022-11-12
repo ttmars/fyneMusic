@@ -16,10 +16,14 @@ import (
 	"time"
 )
 
-var MyPlayer = NewPlayer()
+var streamer beep.StreamSeekCloser
+var musicFormat beep.Format
+var musicStreamer *beep.Resampler		// 控制播放速度
+var ctrl *beep.Ctrl						// 控制暂停
 
+var MyPlayer = NewPlayer()
 type Player struct {
-	PlayMode int             // 播放模式，1:单曲循环	2:随机播放
+	PlayMode int             // 播放模式:1.顺序播放 2.随机播放 3.单曲循环
 	Speed float64            // 播放的倍数(0.5~2)
 	LabelLimitLength int     // 歌曲列表宽度限制(与窗口大小关联)
 	SearchCache *cache.Cache // 搜索缓存，防止重复请求
@@ -29,6 +33,7 @@ type Player struct {
 	KeyWord         string            // 当前搜索关键字
 	SearchAPI       string            // 当前搜索API
 	CurrentSong     Song              // 当前播放歌曲信息
+	CurrentSongIndex int				// 当前播放歌曲的列表下标
 	CurrentLyricMap map[string]string // 当前歌曲的歌词信息，动态解析，动态更新
 	PlayList        []Song            // 当前播放列表信息
 	DownloadPath    string            // 下载路径
@@ -40,7 +45,7 @@ func NewPlayer() *Player {
 	curDir,_ := os.Getwd()
 	downloadPath := curDir + "\\download"
 	return &Player{
-		PlayMode: 2,
+		PlayMode: 1,
 		Speed: 1,
 		LabelLimitLength: 15,
 		SearchCache: cache.New(20*time.Minute, 5*time.Minute),
@@ -49,17 +54,32 @@ func NewPlayer() *Player {
 		DownloadPath: downloadPath,
 		MiguServer: "39.101.203.25:3400",
 		NeteaseServer: "43.138.26.158:3000",
+		CurrentSongIndex: 0,
 	}
 }
 
-// RandomPlay 随机播放线程
+// RandomPlay 播放模式
 func (p *Player)RandomPlay()  {
 	for {
 		select {
 		case <-p.DoneChan:
 			rand.Seed(time.Now().Unix())
 			randomNum := rand.Intn(len(p.PlayList))
-			p.MusicChan <- p.PlayList[randomNum]
+			if p.PlayMode == 1 {
+				if p.CurrentSongIndex == len(p.PlayList)-1 {
+					ml.Select(0)
+				}else{
+					ml.Select(p.CurrentSongIndex+1)
+				}
+			}else if p.PlayMode == 2 {
+				if p.CurrentSongIndex == randomNum {
+					p.MusicChan <- p.PlayList[randomNum]
+				}
+				ml.Select(randomNum)
+			}else {
+				ml.Select(p.CurrentSongIndex)
+				p.MusicChan <- p.PlayList[p.CurrentSongIndex]
+			}
 		}
 	}
 }
@@ -69,8 +89,9 @@ func (p *Player)InitPlayList()  {
 	p.PlayList = NeteaseAPI("抖音")
 	p.KeyWord = "抖音"
 	p.SearchAPI = "网易云"
+
 	ml.Refresh()
-	p.DoneChan <- true		// 启动后随机播放
+	ml.Select(0)
 }
 
 // PlayMusic 异步播放器线程
@@ -113,18 +134,13 @@ func (p *Player)PlayMusic()  {
 
 			_ = speaker.Init(musicFormat.SampleRate, musicFormat.SampleRate.N(time.Second/10))
 			speaker.Play(beep.Seq(ctrl, beep.Callback(func() {
-				if p.PlayMode == 1 {
-					p.MusicChan <- song			// 单曲循环
-				}else{
-					p.DoneChan <- true			// 随机播放
-				}
+				p.DoneChan <- true
 			})))
 			// 更新状态
 			p.CurrentSong = song
 			mp.PlayerLabel.SetText(song.Name + "_" + song.Singer + ".mp3")
 			mp.PlayerLabel.Refresh()
 			mp.PlayerPause.SetIcon(theme.MediaPauseIcon())
-			mp.PlayerPause.SetText("暂  停")
 			mp.PlayerLyric.SetText("")
 			mp.PlayerLyric.Refresh()
 			p.CurrentLyricMap = make(map[string]string)
@@ -140,7 +156,6 @@ func (p *Player)PlayMusic()  {
 		}
 	}
 }
-
 
 // UpdateProgressLabel 异步更新线程
 func (p *Player)UpdateProgressLabel()  {

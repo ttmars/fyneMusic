@@ -72,8 +72,8 @@ func MakeMyMenu(a fyne.App, w fyne.Window) *fyne.MainMenu {
 		cw.Show()
 	})
 
-	helpMenuItem := fyne.NewMenuItem("doc", func() {
-		u, _ := url.Parse("https://developer.fyne.io")
+	helpMenuItem := fyne.NewMenuItem("github", func() {
+		u, _ := url.Parse("https://github.com/ttmars/fyneMusic")
 		_ = a.OpenURL(u)
 	})
 

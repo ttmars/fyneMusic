@@ -1,7 +1,6 @@
 package music
 
 import (
-	"fmt"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
@@ -16,11 +15,10 @@ type MusicSearch struct {
 	SearchEntry *widget.Entry
 	SearchEngine *widget.SelectEntry
 	SearchSubmit *widget.Button
-	SearchModCheck *widget.Check
 }
 func MakeMusicSearch()(c fyne.CanvasObject)  {
 	sw.SearchEntry = widget.NewEntry()
-	sw.SearchEntry.SetPlaceHolder("遇见萤火")
+	sw.SearchEntry.SetPlaceHolder("抖音")
 
 	sw.SearchEngine = widget.NewSelectEntry([]string{"网易云", "咪咕"})
 	sw.SearchEngine.SetText("网易云")
@@ -29,28 +27,19 @@ func MakeMusicSearch()(c fyne.CanvasObject)  {
 		searchFunc(sw.SearchEngine.Text, sw.SearchEntry.Text)
 	})
 
-	sw.SearchModCheck = widget.NewCheck("单曲循环", func(b bool) {
-		if b {
-			MyPlayer.PlayMode = 1
-		}else {
-			MyPlayer.PlayMode = 2
-		}
-	})
 	c = container.NewBorder(nil,nil,nil,sw.SearchSubmit, sw.SearchEngine)
 	c = container.NewGridWithColumns(5, sw.SearchEntry, c)
-	c = container.NewBorder(nil,nil,nil, sw.SearchModCheck, c)
 
 	titleLabel := widget.NewLabelWithStyle("音乐标题", fyne.TextAlignLeading, fyne.TextStyle{Bold:true})
 	singerLabel := widget.NewLabel("歌手")
-	linkLabel := widget.NewLabel("点播")
 	albumLabel := widget.NewLabel("专辑")
-	downloadLabel := widget.NewLabelWithStyle("标准", fyne.TextAlignLeading, fyne.TextStyle{Bold:true})
-	flacDownloadLabel := widget.NewLabelWithStyle("无损", fyne.TextAlignLeading, fyne.TextStyle{Bold:true})
-	down := container.NewGridWithColumns(2, downloadLabel, flacDownloadLabel)
-	musicLabel := container.NewGridWithColumns(2, linkLabel, down)
-	musicLabel = container.NewGridWithColumns(4, titleLabel, singerLabel,albumLabel,musicLabel)
+	downloadLabel := widget.NewLabelWithStyle("下载", fyne.TextAlignLeading, fyne.TextStyle{Bold:true})
+	flacDownloadLabel := widget.NewLabelWithStyle("", fyne.TextAlignLeading, fyne.TextStyle{Bold:true})
 
-	c = container.NewVBox(c, musicLabel)
+	t1 := container.NewGridWithColumns(2, downloadLabel, flacDownloadLabel)
+	t2 := container.NewGridWithColumns(3, titleLabel, singerLabel,albumLabel)
+	t3 := container.NewBorder(nil,nil,nil,t1,t2)
+	c = container.NewVBox(c, t3)
 	return
 }
 
@@ -71,7 +60,6 @@ func searchFunc(eg, kw string)  {
 		}else{
 			cur := time.Now()
 			MyPlayer.PlayList = NeteaseAPI(kw)
-			fmt.Println(len(MyPlayer.PlayList), kw)
 			log.Println("网易云请求耗时：", time.Since(cur))
 			if len(MyPlayer.PlayList) == 1 {
 				dialog.ShowInformation("搜索失败", "网易云API服务器出错.", Window)
@@ -97,6 +85,7 @@ func searchFunc(eg, kw string)  {
 	}
 
 	ml.Refresh()
-
-	//MyPlayer.DoneChan <- true		// 搜索后自动随机播放
+	MyPlayer.MusicChan <- MyPlayer.PlayList[0]
+	MyPlayer.CurrentSongIndex = 0
+	ml.Select(0)
 }
