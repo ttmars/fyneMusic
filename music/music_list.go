@@ -50,7 +50,7 @@ func MakeMusicList() fyne.CanvasObject {
 			}
 
 			c1.Objects[0].(*widget.Hyperlink).OnTapped = func() {
-				path := MyPlayer.DownloadPath + "\\" + d.Name + "_" + d.Singer + ".mp3"
+				path := MyPlayer.DownloadPath + "\\" + d.Name + ".mp3"
 				err := DownloadMusic(d.Audio, path)
 				if err != nil {
 					dialog.ShowInformation("下载失败!", err.Error(), Window)
@@ -59,7 +59,7 @@ func MakeMusicList() fyne.CanvasObject {
 				}
 			}
 			c1.Objects[1].(*widget.Hyperlink).OnTapped = func() {
-				path := MyPlayer.DownloadPath + "\\" + d.Name + "_" + d.Singer + ".flac"
+				path := MyPlayer.DownloadPath + "\\" + d.Name + ".flac"
 				err := DownloadMusic(d.Flac, path)
 				if err != nil {
 					dialog.ShowInformation("下载失败!", err.Error(), Window)
