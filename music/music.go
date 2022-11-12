@@ -47,7 +47,7 @@ func CreateApp(myApp fyne.App, parent fyne.Window) fyne.CanvasObject {
 
 //初始化Preferences变量
 func initPreferences()  {
-	downloadPath :=  App.Preferences().String("savePath")
+	downloadPath :=  App.Preferences().String("downloadPath")
 	miguServer := App.Preferences().String("miguServer")
 	neteaseServer := App.Preferences().String("neteaseServer")
 	if _,err := os.Stat(downloadPath); err == nil {
