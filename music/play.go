@@ -186,6 +186,24 @@ func (p *Player)UpdateProgressLabel()  {
 	}
 }
 
+// UpdateSongName 动态更新播放器歌名
+func (p *Player)UpdateSongName()  {
+	for {
+		s := []rune(MyPlayer.CurrentSong.Name)
+		l := len(s)
+		if l>=20 {
+			l = 15
+		}
+		for i:=0;i<=l;i++{
+			if mp.PlayerSongNameLabel != nil {
+				mp.PlayerSongNameLabel.SetText(string(s[i:l]))
+				mp.PlayerSongNameLabel.Refresh()
+				time.Sleep(time.Millisecond*500)
+			}
+		}
+	}
+}
+
 // 解析歌词
 func (p *Player)parseLyric(s string) map[string]string {
 	m := make(map[string]string)

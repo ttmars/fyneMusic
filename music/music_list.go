@@ -38,7 +38,11 @@ func MakeMusicList() fyne.CanvasObject {
 			c1 := Item.(*fyne.Container).Objects[1].(*fyne.Container)
 			//fmt.Println(len(c1.Objects), len(c2.Objects))
 
-			c2.Objects[0].(*widget.Label).SetText(d.Name)
+			s := []rune(d.Name)
+			if len(s) >=29 {
+				s = s[:29]
+			}
+			c2.Objects[0].(*widget.Label).SetText(string(s))
 			c2.Objects[1].(*widget.Label).SetText(d.Singer)
 			c2.Objects[2].(*widget.Hyperlink).SetText(d.AlbumName)
 			c2.Objects[2].(*widget.Hyperlink).OnTapped = func() {

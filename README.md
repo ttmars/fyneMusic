@@ -37,5 +37,8 @@ go run main.go
 
 ### 打包
 ```shell
+打包应用:
 fyne package -os windows -icon logo.jpg
+嵌入静态资源:
+fyne bundle --pkg icon -o random.go random.png
 ```

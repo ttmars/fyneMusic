@@ -6,6 +6,7 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
+	"fyneMusic/static/icon"
 	"math"
 )
 
@@ -20,7 +21,9 @@ type MusicPlayer struct {
 	PlayerNext *widget.Button		// 下一曲
 	PlayerPrev *widget.Button		// 上一曲
 	PlayerMode *widget.Hyperlink		// 播放模式
+	PlayerModeButton *widget.Button		// 播放模式
 	PlayerSpeedLabel *widget.Hyperlink	// 播放速度
+	PlayerSongNameLabel *widget.Label		// 当前播放歌名标签
 	PlayerSpeedLeft *widget.Label
 	PlayerSpeedSlider *widget.Slider
 	PlayerSpeedRight *widget.Label
@@ -89,20 +92,20 @@ func MakeMusicPlayer()(c fyne.CanvasObject)  {
 		MyPlayer.CurrentSongIndex -=1
 		ml.Select(MyPlayer.CurrentSongIndex)
 	})
-	mp.PlayerMode = widget.NewHyperlink("顺序播放", nil)
-	mp.PlayerMode.OnTapped = func() {
+
+	mp.PlayerModeButton = widget.NewButtonWithIcon("", icon.ResourceCycleJpg, func() {
 		if MyPlayer.PlayMode == 1 {
 			MyPlayer.PlayMode = 2
-			mp.PlayerMode.SetText("随机播放")
+			mp.PlayerModeButton.SetIcon(icon.ResourceRandomPng)
 		}else if MyPlayer.PlayMode == 2 {
 			MyPlayer.PlayMode = 3
-			mp.PlayerMode.SetText("单曲循环")
+			mp.PlayerModeButton.SetIcon(icon.ResourceSingleJpg)
 		}else{
 			MyPlayer.PlayMode = 1
-			mp.PlayerMode.SetText("顺序播放")
+			mp.PlayerModeButton.SetIcon(icon.ResourceCycleJpg)
 		}
-	}
-
+	})
+	mp.PlayerSongNameLabel = widget.NewLabel(MyPlayer.CurrentSong.Name)
 
 	// 第三行
 	mp.PlayerSpeedLeft = widget.NewLabel("0.5")
@@ -114,22 +117,15 @@ func MakeMusicPlayer()(c fyne.CanvasObject)  {
 		MyPlayer.Speed = f
 		musicStreamer.SetRatio(f)
 		mp.PlayerSpeedLabel.SetText(fmt.Sprintf("%.1f倍速", f))
-		//speedSliderLeftLabel.SetText(fmt.Sprintf("%.1f", f))
 	}
 
+	//l1 := container.NewGridWithColumns(2, mp.PlayerSongNameLabel, mp.PlayerLyric)
+	//line1 := container.NewBorder(nil,nil,nil,mp.PlayerSpeedLabel,l1)
 
-	//line1 := container.NewBorder(nil,nil,mp.PlayerLabel,mp.PlayerPause, container.NewCenter(mp.PlayerLyric))
-	//line2 := container.NewBorder(nil,nil,mp.PlayerStartTime,mp.PlayerEndTime,mp.PlayerProgress)
-	//line2 = container.NewBorder(nil,nil,mp.PlayerSpeedLabel,mp.PlayerNext, line2)
-	//line3 = container.NewBorder(nil,nil,mp.PlayerSpeedLeft,mp.PlayerSpeedRight,mp.PlayerSpeedSlider)
-	////line3.Hide()
-	//c = container.NewVBox(line1, line2)
-	//c = container.NewBorder(nil,line3,nil,nil,c)
-	//line1 := container.NewGridWithColumns(3, mp.PlayerPrev, mp.PlayerPause, mp.PlayerNext)
+	l1 := container.NewGridWithColumns(3, mp.PlayerSongNameLabel, mp.PlayerLyric)
+	line1 := container.NewBorder(nil,nil,nil,mp.PlayerSpeedLabel,l1)
 
-	line1 := container.NewBorder(nil,nil,mp.PlayerSpeedLabel,mp.PlayerMode,container.NewCenter(mp.PlayerLyric))
-
-	t1 := container.NewBorder(nil, nil,mp.PlayerPrev,mp.PlayerNext,mp.PlayerPause)
+	t1 := container.NewGridWithColumns(4, mp.PlayerModeButton,mp.PlayerPrev,mp.PlayerPause, mp.PlayerNext)
 	t2 := container.NewBorder(nil,nil,mp.PlayerStartTime, mp.PlayerEndTime, mp.PlayerProgress)
 	line2 := container.NewBorder(nil,nil,nil,t1,t2)
 
