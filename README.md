@@ -33,7 +33,7 @@ go run main.go
 4. 或直接下载：[https://github.com/ttmars/fyneMusic/releases](https://github.com/ttmars/fyneMusic/releases)
 ### 预览
 
-![image](https://raw.githubusercontent.com/ttmars/image/master/github/fyneMusic.png)
+![image](https://raw.githubusercontent.com/ttmars/image/master/github/fyneMusic1.png)
 
 ### 打包
 ```shell
