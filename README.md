@@ -31,9 +31,9 @@ go mod tidy
 go run main.go
 ```
 4. 或直接下载：[https://github.com/ttmars/fyneMusic/releases](https://github.com/ttmars/fyneMusic/releases)
-### 效果图
+### 预览
 
-![image](https://raw.githubusercontent.com/ttmars/image/06d0d3f72f0bda46c8584687546830bbaa3e79f6/github/fyneMusic.png)
+![image](https://raw.githubusercontent.com/ttmars/image/master/github/fyneMusic.png)
 
 ### 打包
 ```shell
