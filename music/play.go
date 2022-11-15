@@ -86,8 +86,8 @@ func (p *Player)RandomPlay()  {
 
 // InitPlayList 异步初始化线程
 func (p *Player)InitPlayList()  {
-	p.PlayList = NeteaseAPI("抖音")
-	p.KeyWord = "抖音"
+	p.PlayList = NeteaseAPI("孙露")
+	p.KeyWord = "孙露"
 	p.SearchAPI = "网易云"
 
 	ml.Refresh()
