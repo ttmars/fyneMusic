@@ -130,6 +130,6 @@ func makeNav(setTutorial func(tutorial Screen), loadPrevious bool) fyne.CanvasOb
 
 	// Resource5Png
 	// 方式二：将静态资源转换成.go文件进行引入
-	var ImageWall *canvas.Image = canvas.NewImageFromResource(wall.Resource4Png)
+	var ImageWall *canvas.Image = canvas.NewImageFromResource(wall.Resource5Png)
 	return container.NewBorder(tree, nil, nil, nil, ImageWall)
 }
