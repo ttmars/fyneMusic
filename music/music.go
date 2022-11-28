@@ -55,16 +55,9 @@ func CreateApp(myApp fyne.App, parent fyne.Window) fyne.CanvasObject {
 //初始化Preferences变量
 func initPreferences()  {
 	downloadPath :=  App.Preferences().String("downloadPath")
-	miguServer := App.Preferences().String("miguServer")
-	neteaseServer := App.Preferences().String("neteaseServer")
+	MyPlayer.MiguServer = App.Preferences().String("miguServer")
+	MyPlayer.NeteaseServer = App.Preferences().String("neteaseServer")
 	if _,err := os.Stat(downloadPath); err == nil {
 		MyPlayer.DownloadPath = downloadPath
 	}
-	if _,err := os.Stat(miguServer); err == nil {
-		MyPlayer.MiguServer = miguServer
-	}
-	if _,err := os.Stat(neteaseServer); err == nil {
-		MyPlayer.NeteaseServer = neteaseServer
-	}
 }
-
