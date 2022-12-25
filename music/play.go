@@ -53,9 +53,8 @@ func NewPlayer() *Player {
 		DoneChan: make(chan bool, 1),
 		DownloadPath: downloadPath,
 		MiguServer: "39.101.203.25:3400",
-		//NeteaseServer: "111.67.192.132:3000",
+		NeteaseServer: "39.101.203.25:3000",
 		//NeteaseServer: "neteaseapi.youthsweet.com",
-		NeteaseServer: "api.zburu.com",
 		CurrentSongIndex: 0,
 	}
 }

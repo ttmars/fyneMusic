@@ -14,7 +14,7 @@ var Window fyne.Window
 var App fyne.App
 
 func RunApp() {
-	App = app.NewWithID("music")                     // 创建APP
+	App = app.NewWithID("fyne_music")                     // 创建APP
 	Window = App.NewWindow("网易云音乐")                  // 创建窗口
 	App.SetIcon(icon.ResourceLogoJpg)                // 设置logo
 	App.Settings().SetTheme(&font.MyTheme{})         // 设置APP主题，嵌入字体，解决乱码
