@@ -101,28 +101,42 @@ func (p *Player)PlayMusic()  {
 		select{
 		case song := <-p.MusicChan:
 			speaker.Clear()
-			r,err := http.Get(song.Audio)
-			if err != nil || r.StatusCode != 200 {
-				//dialog.ShowInformation("播放失败", "版权限制\n"+p.CurrentSong.Name+"_"+p.CurrentSong.Singer+".mp3", W)
-				log.Println("自动刷新数据!", p.SearchAPI, p.KeyWord)
-				go searchFunc(p.SearchAPI, p.KeyWord)
-				break
+			var data io.ReadCloser
+			if p.SearchAPI == "云盘" {
+				r,err := http.Get(song.Audio)
+				if err != nil || r.StatusCode != 200 {
+					log.Println("自动刷新数据!", p.SearchAPI, p.KeyWord)
+					go searchFunc(p.SearchAPI, p.KeyWord)
+					break
+				}
+				defer r.Body.Close()
+				data = r.Body
+				log.Println("云盘搜索！")
+			}else{
+				r,err := http.Get(song.Audio)
+				if err != nil || r.StatusCode != 200 {
+					log.Println("自动刷新数据!", p.SearchAPI, p.KeyWord)
+					go searchFunc(p.SearchAPI, p.KeyWord)
+					break
+				}
+				defer r.Body.Close()
+				// 写入文件
+				b,err := io.ReadAll(r.Body)
+				if err != nil {
+					log.Println(err)
+					break
+				}
+				f,err := os.Create(os.TempDir() + "\\tmp.mp3")
+				if err != nil {
+					log.Println(err)
+					break
+				}
+				f.Write(b)
+				f.Seek(0,0)
+				data = f
 			}
-			defer r.Body.Close()
-			// 写入文件
-			b,err := io.ReadAll(r.Body)
-			if err != nil {
-				log.Println(err)
-				break
-			}
-			f,err := os.Create(os.TempDir() + "\\tmp.mp3")
-			if err != nil {
-				log.Println(err)
-				break
-			}
-			f.Write(b)
-			f.Seek(0,0)
-			streamer, musicFormat, err = mp3.Decode(f)		// 原始音频流
+			var err error
+			streamer, musicFormat, err = mp3.Decode(data)		// 原始音频流
 			if err != nil {
 				log.Println(err)
 				break

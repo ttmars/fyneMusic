@@ -20,7 +20,7 @@ func MakeMusicSearch()(c fyne.CanvasObject)  {
 	sw.SearchEntry = widget.NewEntry()
 	sw.SearchEntry.SetPlaceHolder("纯音乐")
 
-	sw.SearchEngine = widget.NewSelectEntry([]string{"网易云", "咪咕"})
+	sw.SearchEngine = widget.NewSelectEntry([]string{"网易云", "咪咕", "云盘"})
 	sw.SearchEngine.SetText("网易云")
 
 	sw.SearchSubmit = widget.NewButtonWithIcon("搜索",theme.SearchIcon(), func() {
@@ -68,7 +68,7 @@ func searchFunc(eg, kw string)  {
 				MyPlayer.SearchCache.SetDefault("网易云"+kw, MyPlayer.PlayList)
 			}
 		}
-	}else{
+	}else if eg == "咪咕" {
 		if x, found := MyPlayer.SearchCache.Get("咪咕"+kw); found {
 			MyPlayer.PlayList = x.([]Song)
 		}else{
@@ -80,6 +80,20 @@ func searchFunc(eg, kw string)  {
 				return
 			}else{
 				MyPlayer.SearchCache.SetDefault("咪咕"+kw, MyPlayer.PlayList)
+			}
+		}
+	}else {
+		if x, found := MyPlayer.SearchCache.Get("云盘"+kw); found {
+			MyPlayer.PlayList = x.([]Song)
+		}else{
+			cur := time.Now()
+			MyPlayer.PlayList = CloudAPI(kw)
+			log.Println("云盘耗时：", time.Since(cur))
+			if len(MyPlayer.PlayList) == 0 {
+				dialog.ShowInformation("搜索失败", "云盘搜索出错.", Window)
+				return
+			}else{
+				MyPlayer.SearchCache.SetDefault("云盘"+kw, MyPlayer.PlayList)
 			}
 		}
 	}
