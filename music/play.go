@@ -102,40 +102,29 @@ func (p *Player)PlayMusic()  {
 		case song := <-p.MusicChan:
 			speaker.Clear()
 			var data io.ReadCloser
-			if p.SearchAPI == "云盘" {
-				r,err := http.Get(song.Audio)
-				if err != nil || r.StatusCode != 200 {
-					log.Println("自动刷新数据!", p.SearchAPI, p.KeyWord)
-					go searchFunc(p.SearchAPI, p.KeyWord)
-					break
-				}
-				defer r.Body.Close()
-				data = r.Body
-				log.Println("云盘搜索！")
-			}else{
-				r,err := http.Get(song.Audio)
-				if err != nil || r.StatusCode != 200 {
-					log.Println("自动刷新数据!", p.SearchAPI, p.KeyWord)
-					go searchFunc(p.SearchAPI, p.KeyWord)
-					break
-				}
-				defer r.Body.Close()
-				// 写入文件
-				b,err := io.ReadAll(r.Body)
-				if err != nil {
-					log.Println(err)
-					break
-				}
-				f,err := os.Create(os.TempDir() + "\\tmp.mp3")
-				if err != nil {
-					log.Println(err)
-					break
-				}
-				f.Write(b)
-				f.Seek(0,0)
-				data = f
+
+			r,err := http.Get(song.Audio)
+			if err != nil || r.StatusCode != 200 {
+				log.Println("自动刷新数据!", p.SearchAPI, p.KeyWord)
+				go searchFunc(p.SearchAPI, p.KeyWord)
+				break
 			}
-			var err error
+			defer r.Body.Close()
+			// 写入文件
+			b,err := io.ReadAll(r.Body)
+			if err != nil {
+				log.Println(err)
+				break
+			}
+			f,err := os.Create(os.TempDir() + "\\tmp.mp3")
+			if err != nil {
+				log.Println(err)
+				break
+			}
+			f.Write(b)
+			f.Seek(0,0)
+			data = f
+
 			streamer, musicFormat, err = mp3.Decode(data)		// 原始音频流
 			if err != nil {
 				log.Println(err)
