@@ -11,21 +11,22 @@ import (
 )
 
 var ml *widget.List
+
 func MakeMusicList() fyne.CanvasObject {
 	ml = widget.NewList(
 		func() int {
 			return len(MyPlayer.PlayList)
 		},
 		func() fyne.CanvasObject {
-			titleLabel := widget.NewLabelWithStyle("音乐标题", fyne.TextAlignLeading, fyne.TextStyle{Bold:true})
+			titleLabel := widget.NewLabelWithStyle("音乐标题", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 			singerLabel := widget.NewLabel("歌手")
 			albumLabel := widget.NewHyperlink("专辑", nil)
 			downloadLabel := widget.NewHyperlink("标准", nil)
 			flacDownloadLabel := widget.NewHyperlink("无损", nil)
 
 			t1 := container.NewGridWithColumns(2, downloadLabel, flacDownloadLabel)
-			t2 := container.NewGridWithColumns(3, titleLabel,singerLabel,albumLabel)
-			c := container.NewBorder(nil,nil,nil,t1,t2)
+			t2 := container.NewGridWithColumns(3, titleLabel, singerLabel, albumLabel)
+			c := container.NewBorder(nil, nil, nil, t1, t2)
 			return c
 		},
 		func(id widget.ListItemID, Item fyne.CanvasObject) {
@@ -39,17 +40,21 @@ func MakeMusicList() fyne.CanvasObject {
 			//fmt.Println(len(c1.Objects), len(c2.Objects))
 
 			s := []rune(d.Name)
-			if len(s) >=29 {
+			if len(s) >= 29 {
 				s = s[:29]
 			}
 			c2.Objects[0].(*widget.Label).SetText(string(s))
 			c2.Objects[1].(*widget.Label).SetText(d.Singer)
+			//albumStr := []rune(d.AlbumName)
+			//if len(albumStr) >= 20 {
+			//	albumStr = albumStr[:20]
+			//}
 			c2.Objects[2].(*widget.Hyperlink).SetText(d.AlbumName)
 			c2.Objects[2].(*widget.Hyperlink).OnTapped = func() {
 				w := App.NewWindow("image")
 				w.CenterOnScreen()
 				w.SetContent(createImage(d.AlbumPic))
-				w.Resize(fyne.NewSize(400,400))
+				w.Resize(fyne.NewSize(400, 400))
 				w.Show()
 			}
 
@@ -58,7 +63,7 @@ func MakeMusicList() fyne.CanvasObject {
 				err := DownloadMusic(d.Audio, path)
 				if err != nil {
 					dialog.ShowInformation("下载失败!", err.Error(), Window)
-				}else{
+				} else {
 					dialog.ShowInformation("下载成功!", path, Window)
 				}
 			}
@@ -67,7 +72,7 @@ func MakeMusicList() fyne.CanvasObject {
 				err := DownloadMusic(d.Flac, path)
 				if err != nil {
 					dialog.ShowInformation("下载失败!", err.Error(), Window)
-				}else{
+				} else {
 					dialog.ShowInformation("下载成功!", path, Window)
 				}
 			}
@@ -86,7 +91,7 @@ func MakeMusicList() fyne.CanvasObject {
 }
 
 func createImage(pic string) *canvas.Image {
-	r,err := http.Get(pic)
+	r, err := http.Get(pic)
 	if err != nil {
 		return canvas.NewImageFromResource(theme.FyneLogo())
 	}
@@ -95,4 +100,3 @@ func createImage(pic string) *canvas.Image {
 	//image.FillMode = canvas.ImageFillOriginal
 	return image
 }
-

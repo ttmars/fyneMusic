@@ -18,49 +18,50 @@ import (
 
 var streamer beep.StreamSeekCloser
 var musicFormat beep.Format
-var musicStreamer *beep.Resampler		// 控制播放速度
-var ctrl *beep.Ctrl						// 控制暂停
+var musicStreamer *beep.Resampler // 控制播放速度
+var ctrl *beep.Ctrl               // 控制暂停
 
 var MyPlayer = NewPlayer()
-type Player struct {
-	PlayMode int             // 播放模式:1.顺序播放 2.随机播放 3.单曲循环
-	Speed float64            // 播放的倍数(0.5~2)
-	LabelLimitLength int     // 歌曲列表宽度限制(与窗口大小关联)
-	SearchCache *cache.Cache // 搜索缓存，防止重复请求
-	MusicChan chan Song      // 存放歌曲信息，播放器监听，有数据则播放
-	DoneChan chan bool       // 播放器将播放完毕后的信号传入此通道
 
-	KeyWord         string            // 当前搜索关键字
-	SearchAPI       string            // 当前搜索API
-	CurrentSong     Song              // 当前播放歌曲信息
-	CurrentSongIndex int				// 当前播放歌曲的列表下标
-	CurrentLyricMap map[string]string // 当前歌曲的歌词信息，动态解析，动态更新
-	PlayList        []Song            // 当前播放列表信息
-	DownloadPath    string            // 下载路径
-	MiguServer      string            // 咪咕服务器
-	NeteaseServer   string            // 网易云服务器
+type Player struct {
+	PlayMode         int          // 播放模式:1.顺序播放 2.随机播放 3.单曲循环
+	Speed            float64      // 播放的倍数(0.5~2)
+	LabelLimitLength int          // 歌曲列表宽度限制(与窗口大小关联)
+	SearchCache      *cache.Cache // 搜索缓存，防止重复请求
+	MusicChan        chan Song    // 存放歌曲信息，播放器监听，有数据则播放
+	DoneChan         chan bool    // 播放器将播放完毕后的信号传入此通道
+
+	KeyWord          string            // 当前搜索关键字
+	SearchAPI        string            // 当前搜索API
+	CurrentSong      Song              // 当前播放歌曲信息
+	CurrentSongIndex int               // 当前播放歌曲的列表下标
+	CurrentLyricMap  map[string]string // 当前歌曲的歌词信息，动态解析，动态更新
+	PlayList         []Song            // 当前播放列表信息
+	DownloadPath     string            // 下载路径
+	MiguServer       string            // 咪咕服务器
+	NeteaseServer    string            // 网易云服务器
 }
 
 func NewPlayer() *Player {
-	curDir,_ := os.Getwd()
+	curDir, _ := os.Getwd()
 	downloadPath := curDir + "\\download"
 	return &Player{
-		PlayMode: 1,
-		Speed: 1,
+		PlayMode:         1,
+		Speed:            1,
 		LabelLimitLength: 15,
-		SearchCache: cache.New(20*time.Minute, 5*time.Minute),
-		MusicChan: make(chan Song, 1),
-		DoneChan: make(chan bool, 1),
-		DownloadPath: downloadPath,
-		MiguServer: "39.101.203.25:3400",
-		NeteaseServer: "39.101.203.25:3000",
+		SearchCache:      cache.New(20*time.Minute, 5*time.Minute),
+		MusicChan:        make(chan Song, 1),
+		DoneChan:         make(chan bool, 1),
+		DownloadPath:     downloadPath,
+		MiguServer:       "39.101.203.25:3400",
+		NeteaseServer:    "39.101.203.25:3000",
 		//NeteaseServer: "neteaseapi.youthsweet.com",
 		CurrentSongIndex: 0,
 	}
 }
 
 // RandomPlay 播放模式
-func (p *Player)RandomPlay()  {
+func (p *Player) RandomPlay() {
 	for {
 		select {
 		case <-p.DoneChan:
@@ -69,15 +70,15 @@ func (p *Player)RandomPlay()  {
 			if p.PlayMode == 1 {
 				if p.CurrentSongIndex == len(p.PlayList)-1 {
 					ml.Select(0)
-				}else{
-					ml.Select(p.CurrentSongIndex+1)
+				} else {
+					ml.Select(p.CurrentSongIndex + 1)
 				}
-			}else if p.PlayMode == 2 {
+			} else if p.PlayMode == 2 {
 				if p.CurrentSongIndex == randomNum {
 					p.MusicChan <- p.PlayList[randomNum]
 				}
 				ml.Select(randomNum)
-			}else {
+			} else {
 				ml.Select(p.CurrentSongIndex)
 				p.MusicChan <- p.PlayList[p.CurrentSongIndex]
 			}
@@ -86,7 +87,7 @@ func (p *Player)RandomPlay()  {
 }
 
 // InitPlayList 异步初始化线程
-func (p *Player)InitPlayList()  {
+func (p *Player) InitPlayList() {
 	p.PlayList = NeteaseAPI("纯音乐")
 	p.KeyWord = "纯音乐"
 	p.SearchAPI = "网易云"
@@ -96,14 +97,14 @@ func (p *Player)InitPlayList()  {
 }
 
 // PlayMusic 异步播放器线程
-func (p *Player)PlayMusic()  {
+func (p *Player) PlayMusic() {
 	for {
-		select{
+		select {
 		case song := <-p.MusicChan:
 			speaker.Clear()
 			var data io.ReadCloser
 
-			r,err := http.Get(song.Audio)
+			r, err := http.Get(song.Audio)
 			if err != nil || r.StatusCode != 200 {
 				log.Println("自动刷新数据!", p.SearchAPI, p.KeyWord)
 				go searchFunc(p.SearchAPI, p.KeyWord)
@@ -111,30 +112,30 @@ func (p *Player)PlayMusic()  {
 			}
 			defer r.Body.Close()
 			// 写入文件
-			b,err := io.ReadAll(r.Body)
+			b, err := io.ReadAll(r.Body)
 			if err != nil {
 				log.Println(err)
 				break
 			}
-			f,err := os.Create(os.TempDir() + "\\tmp.mp3")
+			f, err := os.Create(os.TempDir() + "\\tmp.mp3")
 			if err != nil {
 				log.Println(err)
 				break
 			}
 			f.Write(b)
-			f.Seek(0,0)
+			f.Seek(0, 0)
 			data = f
 
-			streamer, musicFormat, err = mp3.Decode(data)		// 原始音频流
+			streamer, musicFormat, err = mp3.Decode(data) // 原始音频流
 			if err != nil {
 				log.Println(err)
 				break
 			}
 			defer streamer.Close()
 
-			musicStreamer = beep.ResampleRatio(4, 1, streamer)		// 控制播放速度
+			musicStreamer = beep.ResampleRatio(4, 1, streamer) // 控制播放速度
 			musicStreamer.SetRatio(p.Speed)
-			ctrl = &beep.Ctrl{Streamer: musicStreamer, Paused: false}			// 暂  停/播  放
+			ctrl = &beep.Ctrl{Streamer: musicStreamer, Paused: false} // 暂  停/播  放
 
 			_ = speaker.Init(musicFormat.SampleRate, musicFormat.SampleRate.N(time.Second/10))
 			speaker.Play(beep.Seq(ctrl, beep.Callback(func() {
@@ -150,7 +151,7 @@ func (p *Player)PlayMusic()  {
 			p.CurrentLyricMap = make(map[string]string)
 			if song.Lyric != "" {
 				p.CurrentLyricMap = p.parseLyric(song.Lyric)
-			}else {
+			} else {
 				go func() {
 					start := time.Now()
 					p.CurrentLyricMap = p.parseLyric(GetLyricByID(song.ID))
@@ -162,7 +163,7 @@ func (p *Player)PlayMusic()  {
 }
 
 // UpdateProgressLabel 异步更新线程
-func (p *Player)UpdateProgressLabel()  {
+func (p *Player) UpdateProgressLabel() {
 	for {
 		select {
 		case <-time.After(time.Millisecond * 500):
@@ -172,8 +173,12 @@ func (p *Player)UpdateProgressLabel()  {
 			// 歌词刷新
 			cur := musicFormat.SampleRate.D(streamer.Position()).Round(time.Second)
 			keyTime := fmt.Sprintf("%02d:%02d", int(cur.Seconds())/60, int(cur.Seconds())%60)
-			if lyric,ok := p.CurrentLyricMap[keyTime];ok{
-				mp.PlayerLyric.SetText(lyric)
+			if lyric, ok := p.CurrentLyricMap[keyTime]; ok {
+				lyricStr := []rune(lyric)
+				if len(lyricStr) >= 30 {
+					lyricStr = lyricStr[:30]
+				}
+				mp.PlayerLyric.SetText(string(lyricStr))
 			}
 			mp.PlayerLyric.Refresh()
 
@@ -191,29 +196,29 @@ func (p *Player)UpdateProgressLabel()  {
 }
 
 // UpdateSongName 动态更新播放器歌名
-func (p *Player)UpdateSongName()  {
+func (p *Player) UpdateSongName() {
 	for {
 		s := []rune(MyPlayer.CurrentSong.Name)
 		l := len(s)
-		if l>=20 {
+		if l >= 20 {
 			l = 15
 		}
-		for i:=0;i<=l;i++{
+		for i := 0; i <= l; i++ {
 			if mp.PlayerSongNameLabel != nil {
 				mp.PlayerSongNameLabel.SetText(string(s[i:l]))
 				mp.PlayerSongNameLabel.Refresh()
-				time.Sleep(time.Millisecond*500)
+				time.Sleep(time.Millisecond * 500)
 			}
 		}
 	}
 }
 
 // 解析歌词
-func (p *Player)parseLyric(s string) map[string]string {
+func (p *Player) parseLyric(s string) map[string]string {
 	m := make(map[string]string)
 	t := strings.Split(s, "\n")
-	for _,v := range t {
-		if len(v) > 10{
+	for _, v := range t {
+		if len(v) > 10 {
 			v1 := v[1:6]
 			v2 := v[10:]
 			if v2[0] == ']' {
@@ -224,9 +229,9 @@ func (p *Player)parseLyric(s string) map[string]string {
 	}
 	if p.CurrentSong.AlbumName != "" {
 		m["00:05"] = p.CurrentSong.AlbumName
-	}else if p.CurrentSong.Singer != ""{
+	} else if p.CurrentSong.Singer != "" {
 		m["00:05"] = p.CurrentSong.Singer
-	}else {
+	} else {
 		m["00:05"] = p.CurrentSong.Name
 	}
 	return m
