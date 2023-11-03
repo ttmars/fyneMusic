@@ -8,6 +8,7 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 	"net/http"
+	"net/url"
 )
 
 var ml *widget.List
@@ -51,11 +52,14 @@ func MakeMusicList() fyne.CanvasObject {
 			//}
 			c2.Objects[2].(*widget.Hyperlink).SetText(d.AlbumName)
 			c2.Objects[2].(*widget.Hyperlink).OnTapped = func() {
-				w := App.NewWindow("image")
-				w.CenterOnScreen()
-				w.SetContent(createImage(d.AlbumPic))
-				w.Resize(fyne.NewSize(400, 400))
-				w.Show()
+				// 直接浏览器打开，防止界面卡死
+				u, _ := url.Parse(d.AlbumPic)
+				App.OpenURL(u)
+				//w := App.NewWindow("image")
+				//w.CenterOnScreen()
+				//w.SetContent(createImage(d.AlbumPic))
+				//w.Resize(fyne.NewSize(400, 400))
+				//w.Show()
 			}
 
 			c1.Objects[0].(*widget.Hyperlink).OnTapped = func() {
