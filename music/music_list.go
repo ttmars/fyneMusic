@@ -19,7 +19,7 @@ func MakeMusicList() fyne.CanvasObject {
 			return len(MyPlayer.PlayList)
 		},
 		func() fyne.CanvasObject {
-			titleLabel := widget.NewLabelWithStyle("音乐标题", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+			titleLabel := widget.NewLabelWithStyle("标题", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 			singerLabel := widget.NewLabel("歌手")
 			albumLabel := widget.NewHyperlink("专辑", nil)
 			downloadLabel := widget.NewHyperlink("标准", nil)

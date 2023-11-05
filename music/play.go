@@ -106,8 +106,9 @@ func (p *Player) PlayMusic() {
 
 			r, err := http.Get(song.Audio)
 			if err != nil || r.StatusCode != 200 {
-				log.Println("自动刷新数据!", p.SearchAPI, p.KeyWord)
-				go searchFunc(p.SearchAPI, p.KeyWord)
+				log.Println("音乐链接请求错误:", p.SearchAPI, p.KeyWord, err, song.Audio)
+				//go searchFunc(p.SearchAPI, p.KeyWord)
+				time.Sleep(time.Second * 3)
 				break
 			}
 			defer r.Body.Close()

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+	"slices"
 	"sync"
 )
 
@@ -15,7 +16,7 @@ func MiguAPI(kw string) []Song {
 	var R []Song
 	//var result = make(map[string]Song)
 	u := fmt.Sprintf("http://%s/search/?keyword=%s", MyPlayer.MiguServer, url.QueryEscape(kw))
-	r,err := myHttpClient.Get(u)
+	r, err := myHttpClient.Get(u)
 	if err != nil {
 		return []Song{{ID: "27731362", Name: "服务器错误!!!", Singer: "服务器错误!!!"}}
 	}
@@ -23,7 +24,7 @@ func MiguAPI(kw string) []Song {
 	if r.StatusCode != 200 {
 		return []Song{{ID: "27731362", Name: "服务器错误!!!", Singer: "服务器错误!!!"}}
 	}
-	b,err := io.ReadAll(r.Body)
+	b, err := io.ReadAll(r.Body)
 	if err != nil {
 		return []Song{{ID: "27731362", Name: "服务器错误!!!", Singer: "服务器错误!!!"}}
 	}
@@ -32,36 +33,36 @@ func MiguAPI(kw string) []Song {
 	if err != nil {
 		return []Song{{ID: "27731362", Name: "服务器错误!!!", Singer: "服务器错误!!!"}}
 	}
-	for _,v := range data1.Data.List {
+	for _, v := range data1.Data.List {
 		id := v.Cid
 		name := v.Name
 		var singer string
 		if len(v.Artists) == 1 {
 			singer = v.Artists[0].Name
-		}else if len(v.Artists) == 2 {
-			singer = v.Artists[0].Name + "/" +  v.Artists[1].Name
+		} else if len(v.Artists) == 2 {
+			singer = v.Artists[0].Name + "/" + v.Artists[1].Name
 		}
 		albumName := v.Album.Name
 		albumPic := v.Album.PicURL
 		audio := v.URL
 		var alia, size, flac, lyric string
 		var time int
-		R = append(R, Song{id,name,singer,albumName,albumPic,alia, audio, time, size, flac, lyric})
+		R = append(R, Song{id, name, singer, albumName, albumPic, alia, audio, time, size, flac, lyric})
 	}
 
 	// 音频链接
 	var wg sync.WaitGroup
-	for k,_ := range R{
+	for k, _ := range R {
 		wg.Add(1)
 		go func(index int) {
 			defer wg.Done()
 			uu := fmt.Sprintf("http://%s/song/?cid=%s", MyPlayer.MiguServer, R[index].ID)
-			rr,err := myHttpClient.Get(uu)
+			rr, err := myHttpClient.Get(uu)
 			if err != nil {
 				return
 			}
 			defer rr.Body.Close()
-			bb,err := io.ReadAll(rr.Body)
+			bb, err := io.ReadAll(rr.Body)
 			if err != nil {
 				return
 			}
@@ -79,6 +80,12 @@ func MiguAPI(kw string) []Song {
 	}
 	wg.Wait()
 
+	R = slices.DeleteFunc(R, func(song Song) bool {
+		if song.Audio == "" {
+			return true
+		}
+		return false
+	})
 	return R
 }
 
@@ -131,5 +138,3 @@ type MiguAudioInfo struct {
 		Lyric     string `json:"lyric"`
 	} `json:"data"`
 }
-
-

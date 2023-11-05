@@ -8,35 +8,36 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"slices"
 	"time"
 )
 
-var myHttpClient = &http.Client{Timeout: time.Second*10}
+var myHttpClient = &http.Client{Timeout: time.Second * 10}
 
 type Song struct {
-	ID string			// ID
-	Name string			// 歌名
-	Singer string		// 歌手
-	AlbumName string	// 专辑名
-	AlbumPic string		// 专辑图片链接
-	Alia string			// 主题曲、插曲
-	Audio string		// 音频链接
-	Time int			// 时长
-	Size string			// 大小
-	Flac string			// flac格式链接，仅咪咕音乐
-	Lyric string		// 歌词
+	ID        string // ID
+	Name      string // 歌名
+	Singer    string // 歌手
+	AlbumName string // 专辑名
+	AlbumPic  string // 专辑图片链接
+	Alia      string // 主题曲、插曲
+	Audio     string // 音频链接
+	Time      int    // 时长
+	Size      string // 大小
+	Flac      string // flac格式链接，仅咪咕音乐
+	Lyric     string // 歌词
 }
 
 // GetLyricByID 获取单个歌词
 func GetLyricByID(id string) string {
-	uuu := fmt.Sprintf("http://%s/lyric?id=%s", MyPlayer.NeteaseServer,id)
-	rrr,err := http.Get(uuu)
+	uuu := fmt.Sprintf("http://%s/lyric?id=%s", MyPlayer.NeteaseServer, id)
+	rrr, err := http.Get(uuu)
 	if err != nil {
 		log.Println("歌词获取失败：", err)
 		return ""
 	}
 	defer rrr.Body.Close()
-	bbb,err := io.ReadAll(rrr.Body)
+	bbb, err := io.ReadAll(rrr.Body)
 	if err != nil {
 		log.Println("歌词获取失败：", err)
 		return ""
@@ -60,7 +61,7 @@ func NeteaseAPI(kw string) []Song {
 	var result = make(map[string]Song)
 	// 搜索
 	u := fmt.Sprintf("http://%s/cloudsearch?limit=%d&keywords=%s", MyPlayer.NeteaseServer, limit, url.QueryEscape(kw))
-	r,err := myHttpClient.Get(u)
+	r, err := myHttpClient.Get(u)
 	if err != nil {
 		log.Println("myHttpClient.Get:", err)
 		return []Song{{ID: "27731362", Name: "服务器错误!!!", Singer: "服务器错误!!!"}}
@@ -70,26 +71,26 @@ func NeteaseAPI(kw string) []Song {
 		return []Song{{ID: "27731362", Name: "服务器错误!!!", Singer: "服务器错误!!!"}}
 	}
 	defer r.Body.Close()
-	b,err := io.ReadAll(r.Body)
+	b, err := io.ReadAll(r.Body)
 	if err != nil {
 		log.Println("io.ReadAll:", err)
 		return []Song{{ID: "27731362", Name: "服务器错误!!!", Singer: "服务器错误!!!"}}
 	}
 	var searchDate NeteaseSearchInfo
-	err = json.Unmarshal(b, &searchDate)			// 负数解析到int报错，不影响
+	err = json.Unmarshal(b, &searchDate) // 负数解析到int报错，不影响
 	if err != nil {
 		log.Println("json.Unmarshal:", err)
 	}
 
 	var IDS string
 	var IDSlice []string
-	for _,v := range searchDate.Result.Songs {
+	for _, v := range searchDate.Result.Songs {
 		id := fmt.Sprintf("%d", v.ID)
 		name := v.Name
 		var singer string
-		if len(v.Ar) >=2 {
+		if len(v.Ar) >= 2 {
 			singer = v.Ar[0].Name + "/" + v.Ar[1].Name
-		}else if len(v.Ar) == 1 {
+		} else if len(v.Ar) == 1 {
 			singer = v.Ar[0].Name
 		}
 		albumName := v.Al.Name
@@ -98,11 +99,11 @@ func NeteaseAPI(kw string) []Song {
 		if len(v.Alia) > 0 {
 			alia = v.Alia[0]
 		}
-		var audio,size,flac,lyric string
+		var audio, size, flac, lyric string
 		var time int
 		IDS += id + ","
 		IDSlice = append(IDSlice, id)
-		result[id] = Song{id,name,singer,albumName,albumPic,alia, audio, time, size, flac, lyric}
+		result[id] = Song{id, name, singer, albumName, albumPic, alia, audio, time, size, flac, lyric}
 	}
 
 	// 获取音频信息
@@ -110,14 +111,14 @@ func NeteaseAPI(kw string) []Song {
 		log.Println("len(IDS)=0")
 		return []Song{{ID: "27731362", Name: "服务器错误!!!", Singer: "服务器错误!!!"}}
 	}
-	uu := fmt.Sprintf("http://%s/song/url?id=%s", MyPlayer.NeteaseServer,IDS[:len(IDS)-1])
-	rr,err := myHttpClient.Get(uu)
+	uu := fmt.Sprintf("http://%s/song/url?id=%s", MyPlayer.NeteaseServer, IDS[:len(IDS)-1])
+	rr, err := myHttpClient.Get(uu)
 	if err != nil {
 		log.Println("myHttpClient.Get:", err)
 		return []Song{{ID: "27731362", Name: "服务器错误!!!", Singer: "服务器错误!!!"}}
 	}
 	defer rr.Body.Close()
-	bb,err := io.ReadAll(rr.Body)
+	bb, err := io.ReadAll(rr.Body)
 	if err != nil {
 		log.Println("io.ReadAll:", err)
 		return []Song{{ID: "27731362", Name: "服务器错误!!!", Singer: "服务器错误!!!"}}
@@ -130,12 +131,12 @@ func NeteaseAPI(kw string) []Song {
 		log.Println("json.Unmarshal:", err)
 		return []Song{{ID: "27731362", Name: "服务器错误!!!", Singer: "服务器错误!!!"}}
 	}
-	for _,vv := range audioInfo.Data {
+	for _, vv := range audioInfo.Data {
 		id := fmt.Sprintf("%d", vv.ID)
 		t := result[id]
 		t.Audio = vv.URL
 		//t.Time = fmt.Sprintf("%dm%ds", vv.Time/1000/60, vv.Time/1000%60)
-		t.Time = vv.Time/1000
+		t.Time = vv.Time / 1000
 		t.Size = fmt.Sprintf("%.1fM", float64(vv.Size)/1024/1024)
 		result[id] = t
 
@@ -146,17 +147,24 @@ func NeteaseAPI(kw string) []Song {
 	}
 
 	// 构造结果
-	for _,id := range IDSlice {
-		if v,ok := result[id]; ok {
+	for _, id := range IDSlice {
+		if v, ok := result[id]; ok {
 			R = append(R, v)
 		}
 	}
+
+	R = slices.DeleteFunc(R, func(song Song) bool {
+		if song.Audio == "" {
+			return true
+		}
+		return false
+	})
 	return R
 }
 
 // DownloadMusic 下载歌曲
-func DownloadMusic(url, path string) error  {
-	r,err := http.Get(url)
+func DownloadMusic(url, path string) error {
+	r, err := http.Get(url)
 	if err != nil {
 		return fmt.Errorf("http.Get:%s", err.Error())
 	}
@@ -164,7 +172,7 @@ func DownloadMusic(url, path string) error  {
 		return fmt.Errorf("r.StatusCode:%d", r.StatusCode)
 	}
 	defer r.Body.Close()
-	b,err := io.ReadAll(r.Body)
+	b, err := io.ReadAll(r.Body)
 	if err != nil {
 		return fmt.Errorf("io.ReadAll:%s", err.Error())
 	}
