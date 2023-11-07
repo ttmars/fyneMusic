@@ -176,8 +176,8 @@ func (p *Player) UpdateProgressLabel() {
 			keyTime := fmt.Sprintf("%02d:%02d", int(cur.Seconds())/60, int(cur.Seconds())%60)
 			if lyric, ok := p.CurrentLyricMap[keyTime]; ok {
 				lyricStr := []rune(lyric)
-				if len(lyricStr) >= 30 {
-					lyricStr = lyricStr[:30]
+				if len(lyricStr) >= 23 {
+					lyricStr = lyricStr[:23]
 				}
 				mp.PlayerLyric.SetText(string(lyricStr))
 			}
