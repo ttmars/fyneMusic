@@ -13,14 +13,13 @@ var Window fyne.Window
 var App fyne.App
 
 func RunApp() {
-	App = app.NewWithID("fyne_music") // 创建APP
-	Window = App.NewWindow("网易云音乐")   // 创建窗口
-	App.SetIcon(icon.ResourceLogoJpg) // 设置logo
-	//App.Settings().SetTheme(&font.MyTheme{})           // 设置APP主题，嵌入字体，解决乱码
-	Window.Resize(fyne.NewSize(1200, 800))             // 设置窗口大小
-	Window.CenterOnScreen()                            // 窗口居中显示
-	Window.SetMaster()                                 // 设置为主窗口
-	Window.SetCloseIntercept(func() { Window.Hide() }) // 设置窗口托盘显示
+	App = app.NewWithID("fyne_music")      // 创建APP
+	Window = App.NewWindow("网易云音乐")        // 创建窗口
+	App.SetIcon(icon.ResourceLogoJpg)      // 设置logo
+	Window.Resize(fyne.NewSize(1200, 800)) // 设置窗口大小
+	Window.CenterOnScreen()                // 窗口居中显示
+	Window.SetMaster()                     // 设置为主窗口
+	//Window.SetCloseIntercept(func() { Window.Hide() }) // 设置窗口托盘显示
 	if desk, ok := App.(desktop.App); ok {
 		m := fyne.NewMenu("MyApp",
 			fyne.NewMenuItem("Show", func() {

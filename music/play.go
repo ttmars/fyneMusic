@@ -101,6 +101,7 @@ func (p *Player) PlayMusic() {
 	for {
 		select {
 		case song := <-p.MusicChan:
+			//log.Println("播放歌曲：", song)
 			speaker.Clear()
 			var data io.ReadCloser
 
