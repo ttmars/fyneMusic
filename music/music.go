@@ -6,7 +6,6 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyneMusic/static/icon"
-	"gitee.com/ttmasx/cob/mytheme"
 	"os"
 )
 
@@ -14,7 +13,6 @@ var Window fyne.Window
 var App fyne.App
 
 func RunApp() {
-	mytheme.InitFont(mytheme.STKAITI) // 设置中文字体,要写在第一行
 	App = app.NewWithID("fyne_music") // 创建APP
 	Window = App.NewWindow("网易云音乐")   // 创建窗口
 	App.SetIcon(icon.ResourceLogoJpg) // 设置logo
