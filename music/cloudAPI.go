@@ -7,13 +7,13 @@ import (
 )
 
 func CloudAPI(kw string) []Song {
-	url := "http://39.101.203.25:3800/cloud/api?keyword=" + kw
-	resp,err := http.Get(url)
+	url := "http://8.138.217.221:3800/cloud/api?keyword=" + kw
+	resp, err := http.Get(url)
 	if err != nil {
 		return []Song{{ID: "27731362", Name: "服务器错误!!!", Singer: "服务器错误!!!"}}
 	}
 	defer resp.Body.Close()
-	b,err := io.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return []Song{{ID: "27731362", Name: "服务器错误!!!", Singer: "服务器错误!!!"}}
 	}

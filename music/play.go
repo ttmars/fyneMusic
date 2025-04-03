@@ -53,8 +53,8 @@ func NewPlayer() *Player {
 		MusicChan:        make(chan Song, 1),
 		DoneChan:         make(chan bool, 1),
 		DownloadPath:     downloadPath,
-		MiguServer:       "39.101.203.25:3400",
-		NeteaseServer:    "39.101.203.25:3000",
+		MiguServer:       "8.138.217.221:3400",
+		NeteaseServer:    "8.138.217.221:3000",
 		//NeteaseServer: "neteaseapi.youthsweet.com",
 		CurrentSongIndex: 0,
 	}
@@ -88,8 +88,8 @@ func (p *Player) RandomPlay() {
 
 // InitPlayList 异步初始化线程
 func (p *Player) InitPlayList() {
-	p.PlayList = NeteaseAPI("纯音乐")
-	p.KeyWord = "纯音乐"
+	p.PlayList = NeteaseAPI("孙露")
+	p.KeyWord = "孙露"
 	p.SearchAPI = "网易云"
 
 	ml.Refresh()

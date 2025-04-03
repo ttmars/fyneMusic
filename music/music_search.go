@@ -20,7 +20,7 @@ type MusicSearch struct {
 
 func MakeMusicSearch() (c fyne.CanvasObject) {
 	sw.SearchEntry = widget.NewEntry()
-	sw.SearchEntry.SetPlaceHolder("纯音乐")
+	sw.SearchEntry.SetPlaceHolder("孙露")
 
 	sw.SearchEngine = widget.NewSelectEntry([]string{"网易云", "咪咕", "云盘"})
 	sw.SearchEngine.SetText("网易云")
